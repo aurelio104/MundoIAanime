@@ -1,5 +1,3 @@
-// HeroLanding.tsx — versión TypeScript
-
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 
@@ -109,7 +107,11 @@ const HeroLanding: React.FC = () => {
                 className="tiktok-embed"
                 cite="https://www.tiktok.com/@mundoiaanime/video/7522630469943315725"
                 data-video-id="7522630469943315725"
-                style={{ maxWidth: 605, minWidth: 325 }}
+                style={{
+                  maxWidth: '100%',
+                  minWidth: '100%',
+                  marginBottom: '10px',
+                }}
               >
                 <section>
                   <a
