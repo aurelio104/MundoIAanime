@@ -1,0 +1,41 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "lib": ["ES2022"],
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "outDir": "./dist",
+    "rootDir": "./",
+    "baseUrl": "./",
+    "paths": {
+      "@intelligence/*": ["src/intelligence/*"],
+      "@memory/*": ["src/memory/*"],
+      "@flows/*": ["src/flows/*"],
+      "@services/*": ["src/services/*"],
+      "@utils/*": ["src/utils/*"],
+      "@schemas/*": ["src/schemas/*"],
+      "@models/*": ["src/database/models/*"],
+      "@types/*": ["src/types/*"],
+      "@data/*": ["src/data/*"],
+      "@handlers/*": ["src/handlers/*"],
+      "@ocr/*": ["src/ocr/*"],
+      "@/*": ["src/*"]
+    },
+    "types": ["node"] // 🧠 Asegura que tengas tipado de Node.js
+  },
+  "include": [
+    "src/**/*",
+    "main.ts",
+    "src/types/**/*"  // 🛠️ Incluye bien tus archivos de tipado personalizados
+  ],
+  "exclude": ["node_modules", "dist"]
+}

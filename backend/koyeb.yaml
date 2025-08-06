@@ -1,0 +1,30 @@
+name: bot-inteligente
+
+build:
+  workdir: backend
+  commands:
+    - corepack enable
+    - corepack prepare pnpm@10.12.1 --activate
+    - pnpm install --no-frozen-lockfile
+    - pnpm run build
+
+run:
+  cmd: node --enable-source-maps dist/main.js
+  workdir: backend
+  env:
+    - name: NODE_ENV
+      value: production
+    - name: PORT
+      value: "8000"
+    - name: AUTH_FOLDER
+      value: /app/auth-bot1
+  volumes:
+    - name: auth-bot1
+      mount_path: /app/auth-bot1
+  healthcheck:
+    http_get:
+      path: /
+      port: 8000
+      interval_seconds: 10
+      timeout_seconds: 5
+      failure_threshold: 3

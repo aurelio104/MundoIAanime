@@ -1,0 +1,1 @@
+pnpm build && NODE_ENV=production node dist/main.js

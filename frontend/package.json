@@ -1,0 +1,53 @@
+{
+  "name": "mundoiaanime",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "build:local": "vite build && npm run move",
+    "move": "rm -rf ../backend/admin-dist && cp -r dist ../backend/admin-dist"
+  },
+  "dependencies": {
+    "@fontsource/cinzel": "^5.2.6",
+    "@fontsource/inter": "^5.2.6",
+    "axios": "^1.6.8",
+    "cors": "^2.8.5",
+    "daisyui": "^4.12.24",
+    "framer-motion": "^12.15.0",
+    "jsonwebtoken": "^9.0.2",
+    "jwt-decode": "^4.0.0",
+    "lucide-react": "^0.511.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-hot-toast": "^2.5.2",
+    "react-icons": "^5.5.0",
+    "react-intersection-observer": "^9.16.0",
+    "react-router-dom": "^7.7.1",
+    "safe-buffer": "^5.2.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.25.0",
+    "@types/node": "^24.1.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^4.6.0",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^9.25.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.19",
+    "globals": "^16.0.0",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.4.5",
+    "vite": "^7.0.2",
+    "vite-plugin-pwa": "^1.0.1",
+    "workbox-build": "^7.0.0"
+  },
+  "engines": {
+    "node": ">=20.10.0"
+  }
+}
