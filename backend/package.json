@@ -9,6 +9,7 @@
     "start:local": "NODE_ENV=development pnpm dev",
     "build": "tsup main.ts --format esm --out-dir dist --target node20 --clean",
     "build:prod": "pnpm build",
+    "heroku-build": "pnpm build",
     "start": "NODE_ENV=production node --enable-source-maps dist/main.js",
     "test": "echo \"🧪 Tests no definidos aún\" && exit 0",
     "lint": "tsc --noEmit && eslint .",
@@ -25,7 +26,7 @@
     "inteligencia-artificial",
     "nodejs"
   ],
-  "author": "JCAVALIER",
+  "author": "Mundoianime",
   "license": "MIT",
   "engines": {
     "node": ">=20.11.1",

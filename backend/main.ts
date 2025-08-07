@@ -21,10 +21,12 @@ import tasaRoute from './src/routes/tasa.route.js'
 import visitasRoute from './src/routes/visitas.route.js'
 import { authMiddleware } from './src/middleware/verifyToken.js'
 
-// 🌱 Variables de entorno
-dotenv.config()
+// 🌱 Cargar variables de entorno
+dotenv.config({ path: path.resolve('.env') })
+
 console.log('🚦 Iniciando servidor MundoIAanime + WhatsApp bot...')
 
+// 🧪 Validaciones críticas
 if (!process.env.JWT_SECRET) throw new Error('❌ Falta definir JWT_SECRET en el .env')
 
 const PORT = Number(process.env.PORT) || 8000
@@ -34,8 +36,9 @@ const SELF_URL = process.env.SELF_URL || FRONTEND_ORIGIN
 const isProduction = process.env.NODE_ENV === 'production'
 const AUTH_FOLDER = path.resolve(process.env.AUTH_FOLDER || './auth-bot1')
 
+// 🛑 Captura de errores globales
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('❌ PROMESA NO MANEJADA:', reason, promise)
+  console.error('❌ PROMESA NO MANEJADA:', reason)
 })
 
 process.on('uncaughtException', (err) => {
@@ -61,7 +64,6 @@ async function startServer() {
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
     }))
-
     app.use(rateLimit({
       windowMs: 15 * 60 * 1000,
       max: 100,
@@ -87,13 +89,14 @@ async function startServer() {
     app.use('/api', tasaRoute)
     app.use(visitasRoute)
 
-    // 🔐 Rutas privadas protegidas con token
+    // 🔐 Rutas privadas
     app.use('/api/catalog', authMiddleware, catalogAdminRoutes)
     app.use('/api/admin', authMiddleware, adminPedidosRoute)
 
-    // Eliminar usuario (admin)
+    // 🧹 Eliminar usuario por correo
     app.post('/api/deleteUser', authMiddleware, async (req: Request, res: Response) => {
       const { email } = req.body
+      if (!email) return res.status(400).json({ error: 'Falta correo del usuario' })
       try {
         const result = await User.deleteOne({ correo: email.toLowerCase() })
         if (result.deletedCount === 0) {
@@ -106,7 +109,7 @@ async function startServer() {
       }
     })
 
-    // ♻️ Keep-alive
+    // ♻️ Keep-alive (importante en Koyeb)
     setInterval(() => {
       axios.get(`${SELF_URL}/`)
         .then(() => console.log('📡 Ping keep-alive'))
