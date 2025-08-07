@@ -14,12 +14,12 @@ const AdminLoginForm: React.FC = () => {
   const navigate = useNavigate()
   const emailRef = useRef<HTMLInputElement>(null)
 
-  // Autofocus en campo de email
+  // Autofocus
   useEffect(() => {
     emailRef.current?.focus()
   }, [])
 
-  // Verificar si ya hay sesión activa
+  // ✅ Verificar sesión activa (solo si ya estás logueado previamente)
   useEffect(() => {
     const verificarSesion = async () => {
       try {
@@ -39,20 +39,17 @@ const AdminLoginForm: React.FC = () => {
     verificarSesion()
   }, [navigate])
 
-  // Manejo de login
+  // ✅ Manejar login con redirección real
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
 
     try {
       const success = await login(email, password)
+
       if (success) {
-        const auth = await isAuthenticated()
-        if (auth) {
-          navigate('/admin/dashboard')
-        } else {
-          setError('❌ Sesión no válida. Intenta de nuevo.')
-        }
+        // ⛳ Redirección real para que Safari almacene la cookie
+        window.location.href = '/admin/dashboard'
       } else {
         setError('❌ Credenciales inválidas o error de conexión')
       }
@@ -62,7 +59,7 @@ const AdminLoginForm: React.FC = () => {
     }
   }
 
-  // ⏳ Spinner mientras se verifica sesión
+  // ⏳ Mostrar spinner mientras verifica sesión
   if (loading) {
     return <LoadingSpinner message="Verificando sesión activa..." />
   }
@@ -90,7 +87,7 @@ const AdminLoginForm: React.FC = () => {
         transition={{ duration: 1.8, delay: 0.6 }}
       />
 
-      {/* Formulario de login */}
+      {/* Contenedor del formulario */}
       <motion.div
         className="relative z-20 px-6 text-white flex flex-col items-center space-y-8 w-full max-w-sm font-sans"
         initial="hidden"
@@ -119,7 +116,7 @@ const AdminLoginForm: React.FC = () => {
             aria-label="Correo electrónico"
           />
 
-          {/* Password */}
+          {/* Contraseña */}
           <div className="relative">
             <input
               type={showPassword ? 'text' : 'password'}
@@ -155,7 +152,7 @@ const AdminLoginForm: React.FC = () => {
             Iniciar sesión
           </button>
 
-          {/* Volver al inicio */}
+          {/* Volver */}
           <a
             href="/"
             className="block text-sm text-white/70 text-center hover:text-white mt-2 font-sans"
