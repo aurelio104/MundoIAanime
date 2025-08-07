@@ -115,7 +115,7 @@ const CoursesSection = () => {
 
       `Gracias por tu compra. Te contactaremos pronto con el acceso al curso.`;
 
-    const url = `https://wa.me/584128966414?text=${encodeURIComponent(mensaje)}`;
+    const url = `https://wa.me/584244043150?text=${encodeURIComponent(mensaje)}`;
     window.open(url, '_blank');
   };
 
