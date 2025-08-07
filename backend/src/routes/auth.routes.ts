@@ -1,5 +1,6 @@
 // ✅ FILE: routes/auth.routes.ts
-import { Router } from 'express'
+
+import { Router, type Router as RouterType } from 'express'
 import {
   loginController,
   logoutController,
@@ -7,7 +8,8 @@ import {
 } from '../controllers/login.controller.js'
 import { authMiddleware } from '../middleware/verifyToken.js'
 
-const router = Router()
+// ✅ Tipado explícito para evitar TS2742
+const router: RouterType = Router()
 
 // Public
 router.post('/login', loginController)

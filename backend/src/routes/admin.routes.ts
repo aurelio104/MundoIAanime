@@ -6,7 +6,8 @@ import {
   obtenerUsuariosConPagoVerificado
 } from '../memory/memory.mongo.js'
 
-const router = Router()
+// ✅ Tipado explícito para evitar TS2742 al compilar en Koyeb
+const router: import('express').Router = Router()
 
 // 📦 Obtener usuarios con pagos pendientes
 router.get('/pendientes', async (_req: Request, res: Response): Promise<Response> => {
