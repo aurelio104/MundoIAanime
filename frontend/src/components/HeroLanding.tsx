@@ -19,6 +19,15 @@ const HeroLanding: React.FC = () => {
   }, []);
 
   useEffect(() => {
+  fetch('https://tudominio.com/api/visitas', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include', // si usas cookies
+  }).catch((error) => console.error('Error registrando visita:', error));
+}, []);
+
+
+  useEffect(() => {
     setTimeout(() => {
       const start = window.scrollY;
       const end = 100;

@@ -31,7 +31,6 @@ export const authMiddleware = (
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload
 
-    // Verifica que el payload contenga los campos esperados
     if (
       typeof decoded !== 'object' ||
       !decoded.userId ||
@@ -44,7 +43,7 @@ export const authMiddleware = (
       return res.status(401).json({ error: 'Token inválido' })
     }
 
-    // ✅ Inyecta datos del usuario en la request
+    // ✅ Inyecta datos del usuario
     req.user = {
       userId: decoded.userId,
       correo: decoded.correo,

@@ -17,17 +17,16 @@ import catalogAdminRoutes from './src/routes/catalog.admin.routes.js'
 import adminPedidosRoute from './src/routes/admin.routes.js'
 import registerAdminRoute from './src/routes/registerAdmin.route.js'
 import authRoutes from './src/routes/auth.routes.js'
-import tasaRoute from './src/routes/tasa.route.js' // ✅ NUEVA RUTA
+import tasaRoute from './src/routes/tasa.route.js'
+import visitasRoute from './src/routes/visitas.route.js'
 import { authMiddleware } from './src/middleware/verifyToken.js'
 
 // 🌱 Variables de entorno
 dotenv.config()
 console.log('🚦 Iniciando servidor MundoIAanime + WhatsApp bot...')
 
-// ✅ Validación crítica
 if (!process.env.JWT_SECRET) throw new Error('❌ Falta definir JWT_SECRET en el .env')
 
-// 📁 Configuraciones base
 const PORT = Number(process.env.PORT) || 8000
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/MundoIAanime'
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || 'http://localhost:5173'
@@ -35,7 +34,6 @@ const SELF_URL = process.env.SELF_URL || FRONTEND_ORIGIN
 const isProduction = process.env.NODE_ENV === 'production'
 const AUTH_FOLDER = path.resolve(process.env.AUTH_FOLDER || './auth-bot1')
 
-// 🛑 Captura errores no manejados
 process.on('unhandledRejection', (reason, promise) => {
   console.error('❌ PROMESA NO MANEJADA:', reason, promise)
 })
@@ -56,12 +54,14 @@ async function startServer() {
     const app: Application = express()
     app.set('trust proxy', 1)
 
+    // Seguridad y CORS
     app.use(helmet({ contentSecurityPolicy: false }))
     app.use(cors({
       origin: FRONTEND_ORIGIN,
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
     }))
+
     app.use(rateLimit({
       windowMs: 15 * 60 * 1000,
       max: 100,
@@ -70,11 +70,13 @@ async function startServer() {
     app.use(express.json({ limit: '10kb' }))
     app.use(cookieParser())
 
+    // Crear carpeta auth si no existe
     if (!fs.existsSync(AUTH_FOLDER)) {
       fs.mkdirSync(AUTH_FOLDER, { recursive: true })
       console.log(`📁 Carpeta auth creada en: ${AUTH_FOLDER}`)
     }
 
+    // Prueba de conexión
     app.get('/', (_req, res) => {
       res.send('✅ Servidor y bot funcionando correctamente')
     })
@@ -82,13 +84,14 @@ async function startServer() {
     // 🌐 Rutas públicas
     app.use(registerAdminRoute)
     app.use('/api', authRoutes)
-    app.use('/api', tasaRoute) // ✅ Añadida ruta para tasa BCV
+    app.use('/api', tasaRoute)
+    app.use(visitasRoute)
 
-    // 🔐 Rutas privadas
+    // 🔐 Rutas privadas protegidas con token
     app.use('/api/catalog', authMiddleware, catalogAdminRoutes)
     app.use('/api/admin', authMiddleware, adminPedidosRoute)
 
-    // 🗑️ Eliminar usuario
+    // Eliminar usuario (admin)
     app.post('/api/deleteUser', authMiddleware, async (req: Request, res: Response) => {
       const { email } = req.body
       try {
@@ -110,12 +113,12 @@ async function startServer() {
         .catch((err) => console.error('⚠️ Ping fallido:', err.message))
     }, 12 * 60 * 1000)
 
-    // 🚀 Arrancar HTTP
+    // 🟢 INICIA SERVIDOR HTTP
     app.listen(PORT, () => {
       console.log(`🚀 Servidor escuchando en el puerto ${PORT}`)
     })
 
-    // 🤖 Bot
+    // 🤖 BOT DE WHATSAPP
     await startBot(AUTH_FOLDER)
     console.log('✅ Bot iniciado correctamente')
 

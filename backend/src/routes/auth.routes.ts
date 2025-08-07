@@ -9,8 +9,11 @@ import { authMiddleware } from '../middleware/verifyToken.js'
 
 const router = Router()
 
+// Public
 router.post('/login', loginController)
 router.post('/logout', logoutController)
+
+// Protegido con middleware JWT
 router.get('/check-auth', authMiddleware, checkAuthController)
 
 export default router

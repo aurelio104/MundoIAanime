@@ -28,7 +28,7 @@ export const loginController = async (req: Request, res: Response) => {
       { expiresIn: '1h' }
     )
 
-    // 🍪 Setear cookie segura
+    // 🍪 Set cookie según entorno
     res.cookie('token', token, {
       httpOnly: true,
       secure: isProduction,
@@ -60,7 +60,6 @@ export const logoutController = (_req: Request, res: Response) => {
 }
 
 // 🔐 GET /api/check-auth
-// ⚠️ Este endpoint debería usarse con el middleware authMiddleware
 export const checkAuthController = (req: AuthenticatedRequest, res: Response) => {
   if (!req.user) {
     return res.status(401).json({ error: 'No autenticado' })

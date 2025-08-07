@@ -1,70 +1,55 @@
-// ✅ FILE: src/context/CartContext.tsx
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { CartItem } from '../types';
+// Tipo para el item del carrito
+export interface CartItem {
+  id: string;
+  titulo: string;
+  precio: string;
+  // Otros datos relevantes del curso
+}
 
+// Definir el tipo para el contexto del carrito
 interface CartContextType {
   cartItems: CartItem[];
-  addItem: (item: CartItem) => void;
-  removeItem: (itemId: string) => void;
+  addToCart: (item: CartItem) => void;
+  removeItem: (id: string) => void;
   clearCart: () => void;
 }
 
+// Crear el contexto de carrito
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-// 🛒 Provider global para el carrito
-export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+// Custom hook para acceder al contexto del carrito
+export const useCart = (): CartContextType => {
+  const context = useContext(CartContext);
+  if (!context) {
+    throw new Error('useCart must be used within a CartProvider');
+  }
+  return context;
+};
+
+// Proveedor del contexto
+export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
-  // 🔄 Cargar carrito desde localStorage al montar
-  useEffect(() => {
-    const stored = localStorage.getItem('cart')
-    if (stored) {
-      try {
-        setCartItems(JSON.parse(stored))
-      } catch (e) {
-        console.warn('⚠️ Error al cargar carrito:', e)
-        localStorage.removeItem('cart')
-      }
-    }
-  }, [])
+  // Función para agregar un curso al carrito
+  const addToCart = (item: CartItem) => {
+    setCartItems((prevItems) => [...prevItems, item]);
+  };
 
-  // 💾 Guardar carrito en localStorage al cambiar
-  useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cartItems))
-  }, [cartItems])
-
-  // ➕ Agregar nuevo item (sin duplicados)
-  const addItem = (item: CartItem) => {
-    setCartItems((prev) => {
-      const exists = prev.find((i) => i.id === item.id)
-      return exists ? prev : [...prev, item]
-    })
-  }
-
-  // ➖ Quitar item por ID
+  // Función para eliminar un artículo del carrito
   const removeItem = (id: string) => {
-    setCartItems((prev) => prev.filter((item) => item.id !== id))
-  }
+    setCartItems((prevItems) => prevItems.filter(item => item.id !== id));
+  };
 
-  // 🧹 Vaciar carrito completo
+  // Función para limpiar el carrito
   const clearCart = () => {
-    setCartItems([])
-    localStorage.removeItem('cart')
-  }
+    setCartItems([]);
+  };
 
   return (
-    <CartContext.Provider value={{ cartItems, addItem, removeItem, clearCart }}>
+    <CartContext.Provider value={{ cartItems, addToCart, removeItem, clearCart }}>
       {children}
     </CartContext.Provider>
-  )
-}
-
-// 🧠 Hook para usar el carrito
-export const useCart = (): CartContextType => {
-  const context = useContext(CartContext)
-  if (!context) {
-    throw new Error('useCart debe usarse dentro de un <CartProvider>')
-  }
-  return context
-}
+  );
+};
