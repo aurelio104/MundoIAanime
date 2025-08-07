@@ -92,7 +92,7 @@ const HeroLanding: React.FC = () => {
   transition={{ duration: 0.4 }}
 >
   <motion.div
-    className="max-w-md w-full glass text-white p-6 relative sm:max-w-xs sm:w-full h-[80%] overflow-auto"
+    className="w-full max-w-lg sm:max-w-md md:max-w-sm glass text-white p-6 relative h-[80%] overflow-auto"
     initial={{ y: 100, opacity: 0 }}
     animate={{ y: 0, opacity: 1 }}
     transition={{ duration: 0.5, ease: 'easeOut' }}
@@ -126,6 +126,7 @@ const HeroLanding: React.FC = () => {
     </div>
   </motion.div>
 </motion.div>
+
       )}
 
       <motion.div
