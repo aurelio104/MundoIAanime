@@ -1,3 +1,5 @@
+// HeroLanding.tsx — versión TypeScript
+
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 
@@ -82,52 +84,48 @@ const HeroLanding: React.FC = () => {
       }}
     >
       {showModal && (
-        <motion.div
-          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center px-4"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.4 }}
-        >
-          <motion.div
-            className="max-w-md w-full glass text-white p-6 relative"
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.5, ease: 'easeOut' }}
+<motion.div
+  className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center px-4"
+  initial={{ opacity: 0 }}
+  animate={{ opacity: 1 }}
+  exit={{ opacity: 0 }}
+  transition={{ duration: 0.4 }}
+>
+  <motion.div
+    className="max-w-md w-full glass text-white p-6 relative sm:max-w-xs sm:w-full h-[80%] overflow-auto"
+    initial={{ y: 100, opacity: 0 }}
+    animate={{ y: 0, opacity: 1 }}
+    transition={{ duration: 0.5, ease: 'easeOut' }}
+  >
+    <button
+      onClick={() => setShowModal(false)}
+      className="absolute top-3 right-4 text-white text-xl font-bold hover:text-red-400 transition"
+      aria-label="Cerrar"
+    >
+      ×
+    </button>
+    <div className="w-full">
+      <blockquote
+        className="tiktok-embed w-full"
+        cite="https://www.tiktok.com/@mundoiaanime/video/7522630469943315725"
+        data-video-id="7522630469943315725"
+        style={{ maxWidth: '100%', minWidth: '100%' }}
+      >
+        <section>
+          <a
+            target="_blank"
+            rel="noopener noreferrer"
+            title="@mundoiaanime"
+            href="https://www.tiktok.com/@mundoiaanime?refer=embed"
           >
-            <button
-              onClick={() => setShowModal(false)}
-              className="absolute top-3 right-4 text-white text-xl font-bold hover:text-red-400 transition"
-              aria-label="Cerrar"
-            >
-              ×
-            </button>
-            <div className="w-full">
-              <blockquote
-                className="tiktok-embed"
-                cite="https://www.tiktok.com/@mundoiaanime/video/7522630469943315725"
-                data-video-id="7522630469943315725"
-                style={{
-                  maxWidth: '100%',
-                  minWidth: '100%',
-                  marginBottom: '10px',
-                }}
-              >
-                <section>
-                  <a
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title="@mundoiaanime"
-                    href="https://www.tiktok.com/@mundoiaanime?refer=embed"
-                  >
-                    @mundoiaanime
-                  </a>{' '}
-                  Nezuko Kamado caminando entre las ruinas. 📌 Visual Art AI.
-                </section>
-              </blockquote>
-            </div>
-          </motion.div>
-        </motion.div>
+            @mundoiaanime
+          </a>{' '}
+          Nezuko Kamado caminando entre las ruinas. 📌 Visual Art AI.
+        </section>
+      </blockquote>
+    </div>
+  </motion.div>
+</motion.div>
       )}
 
       <motion.div
