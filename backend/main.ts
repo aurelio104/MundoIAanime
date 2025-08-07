@@ -23,16 +23,15 @@ import { authMiddleware } from './src/middleware/verifyToken.js'
 
 // 🌱 Cargar variables de entorno
 dotenv.config({ path: path.resolve('.env') })
-
 console.log('🚦 Iniciando servidor MundoIAanime + WhatsApp bot...')
 
 // 🧪 Validaciones críticas
 if (!process.env.JWT_SECRET) throw new Error('❌ Falta definir JWT_SECRET en el .env')
 
+// ✅ Configuración base
 const PORT = Number(process.env.PORT) || 8000
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/MundoIAanime'
-const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || 'http://localhost:5173'
-const SELF_URL = process.env.SELF_URL || FRONTEND_ORIGIN
+const SELF_URL = process.env.SELF_URL || 'https://appropriate-wilmette-aurelio104-e8ed3ae9.koyeb.app'
 const isProduction = process.env.NODE_ENV === 'production'
 const AUTH_FOLDER = path.resolve(process.env.AUTH_FOLDER || './auth-bot1')
 
@@ -57,18 +56,20 @@ async function startServer() {
     const app: Application = express()
     app.set('trust proxy', 1)
 
-    // Seguridad y CORS
+    // 🛡️ Seguridad y CORS (con origen explícito)
     app.use(helmet({ contentSecurityPolicy: false }))
     app.use(cors({
-      origin: FRONTEND_ORIGIN,
+      origin: 'https://mundo-i-aanime-hxbt.vercel.app', // ⚠️ DOMINIO FIJO
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
     }))
+
     app.use(rateLimit({
       windowMs: 15 * 60 * 1000,
       max: 100,
       message: { error: '⚠️ Demasiadas solicitudes, intenta más tarde.' }
     }))
+
     app.use(express.json({ limit: '10kb' }))
     app.use(cookieParser())
 
@@ -78,7 +79,7 @@ async function startServer() {
       console.log(`📁 Carpeta auth creada en: ${AUTH_FOLDER}`)
     }
 
-    // Prueba de conexión
+    // Endpoint de prueba
     app.get('/', (_req, res) => {
       res.send('✅ Servidor y bot funcionando correctamente')
     })
@@ -93,7 +94,7 @@ async function startServer() {
     app.use('/api/catalog', authMiddleware, catalogAdminRoutes)
     app.use('/api/admin', authMiddleware, adminPedidosRoute)
 
-    // 🧹 Eliminar usuario por correo
+    // 🧹 Eliminar usuario
     app.post('/api/deleteUser', authMiddleware, async (req: Request, res: Response) => {
       const { email } = req.body
       if (!email) return res.status(400).json({ error: 'Falta correo del usuario' })
@@ -116,12 +117,12 @@ async function startServer() {
         .catch((err) => console.error('⚠️ Ping fallido:', err.message))
     }, 12 * 60 * 1000)
 
-    // 🟢 INICIA SERVIDOR HTTP
+    // 🚀 Arrancar servidor HTTP
     app.listen(PORT, () => {
       console.log(`🚀 Servidor escuchando en el puerto ${PORT}`)
     })
 
-    // 🤖 BOT DE WHATSAPP
+    // 🤖 Bot de WhatsApp
     await startBot(AUTH_FOLDER)
     console.log('✅ Bot iniciado correctamente')
 
