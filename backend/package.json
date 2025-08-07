@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "NODE_OPTIONS='--loader ts-node/esm' dotenv -e .env -- ts-node --esm --transpile-only main.ts",
     "start:local": "NODE_ENV=development pnpm dev",
-"build": "tsup main.ts --format esm --out-dir dist --target node20 --clean"
+    "build": "tsup main.ts --format esm --out-dir dist --target node20 --clean",
     "build:prod": "pnpm build",
     "start": "NODE_ENV=production node --enable-source-maps dist/main.js",
     "test": "echo \"🧪 Tests no definidos aún\" && exit 0",
