@@ -6,23 +6,40 @@ import {
   type Request,
   type Response
 } from 'express'
+import axios from 'axios'
 import Visit from '../models/Visit.model.js'
 
-// ✅ Corrección TS2742: tipo explícito para el router
 const router: RouterType = Router()
 
-// ✅ POST /api/visitas – Registrar nueva visita
 router.post('/visitas', async (req: Request, res: Response): Promise<Response> => {
   try {
-    // 🛡️ Obtener IP desde encabezados (soporte para proxies)
     const rawIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress
     const ip = Array.isArray(rawIp) ? rawIp[0] : rawIp
 
-    // 🧠 Obtener user-agent del navegador
     const userAgent = req.headers['user-agent'] || 'Desconocido'
 
-    // 💾 Crear y guardar la visita
-    const visita = new Visit({ ip, userAgent })
+    // 🌍 Obtener ubicación por IP
+    let location = {}
+
+    if (ip && typeof ip === 'string' && !ip.startsWith('::1') && ip !== '127.0.0.1') {
+      try {
+        const { data } = await axios.get(`https://ipapi.co/${ip}/json/`, {
+          timeout: 3000
+        })
+
+        location = {
+          country: data.country_name,
+          city: data.city,
+          region: data.region
+        }
+} catch (geoErr) {
+  const err = geoErr as Error
+  console.warn('⚠️ Error obteniendo ubicación por IP:', err.message)
+}
+
+    }
+
+    const visita = new Visit({ ip, userAgent, location })
     await visita.save()
 
     return res.status(201).json({ success: true })

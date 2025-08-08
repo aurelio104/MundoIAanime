@@ -1,8 +1,9 @@
+// ✅ AdminDashboard.tsx completamente actualizado para mostrar visitas y ubicación
+
 import React, { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { logout, isAuthenticated } from '../utils/auth'
-import heroBg from '../assets/hero.jpg'
 
 interface Pedido {
   id: string
@@ -18,10 +19,23 @@ interface Pedido {
   confirmado: boolean
 }
 
+interface VisitaGeo {
+  total: number
+  ultimas: Array<{
+    ip: string
+    userAgent: string
+    timestamp: string
+    geo?: {
+      country?: string
+      city?: string
+    }
+  }>
+}
+
 const AdminDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [pedidos, setPedidos] = useState<Pedido[]>([])
-  const [visitas, setVisitas] = useState<number>(0)
+  const [visitas, setVisitas] = useState<VisitaGeo>({ total: 0, ultimas: [] })
   const navigate = useNavigate()
 
   const cargarPedidos = async () => {
@@ -47,7 +61,7 @@ const AdminDashboard: React.FC = () => {
       })
       if (res.ok) {
         const data = await res.json()
-        setVisitas(data.total)
+        setVisitas(data)
       } else {
         console.error('❌ Error al obtener visitas:', await res.text())
       }
@@ -114,8 +128,7 @@ const AdminDashboard: React.FC = () => {
             <div>
               <h1 className="text-4xl font-bold font-sans">Panel de Pedidos – MundoIAanime</h1>
               <p className="text-white/60 text-sm mt-2 font-sans">
-                👁️ Total de visitas registradas:{' '}
-                <span className="font-bold">{visitas}</span>
+                👁️ Total de visitas registradas: <span className="font-bold">{visitas.total}</span>
               </p>
             </div>
             <button
@@ -125,6 +138,19 @@ const AdminDashboard: React.FC = () => {
               Cerrar sesión
             </button>
           </div>
+
+          {visitas.ultimas.length > 0 && (
+            <div className="bg-white/10 p-4 rounded-xl text-sm mb-10">
+              <h2 className="font-semibold mb-2">📍 Últimas visitas</h2>
+              <ul className="list-disc list-inside space-y-1">
+                {visitas.ultimas.map((v, i) => (
+                  <li key={i}>
+                    {v.timestamp.slice(0, 10)} – {v.ip} – {v.geo?.city || 'Ciudad desconocida'}, {v.geo?.country || 'País desconocido'}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {pedidos.length === 0 ? (
             <p className="text-white/70 text-center mt-10 font-sans">
