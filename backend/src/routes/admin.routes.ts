@@ -1,5 +1,4 @@
 // ✅ FILE: src/routes/admin.routes.ts
-
 import {
   Router,
   type Router as RouterType,
@@ -9,13 +8,18 @@ import {
 
 import {
   obtenerUsuariosConPagoPendiente,
-  obtenerUsuariosConPagoVerificado,
-  obtenerTodosLosPedidos // ✅ asegúrate de tener esta función en tu storage
+  obtenerUsuariosConPagoVerificado
 } from '../memory/memory.mongo.js'
+
+import {
+  listarPedidos,
+  obtenerPedido,
+  actualizarEstadoPedido
+} from '../controllers/admin.pedidos.controller.js'
 
 const router: RouterType = Router()
 
-// 📦 GET /api/admin/pendientes – Usuarios con pago pendiente
+// 📦 GET /api/admin/pendientes – Usuarios con pago pendiente (memoria)
 router.get('/pendientes', async (_req: Request, res: Response): Promise<Response> => {
   try {
     const usuarios = await obtenerUsuariosConPagoPendiente()
@@ -28,7 +32,7 @@ router.get('/pendientes', async (_req: Request, res: Response): Promise<Response
   }
 })
 
-// ✅ GET /api/admin/verificados – Usuarios con pago verificado
+// ✅ GET /api/admin/verificados – Usuarios con pago verificado (memoria)
 router.get('/verificados', async (_req: Request, res: Response): Promise<Response> => {
   try {
     const usuarios = await obtenerUsuariosConPagoVerificado()
@@ -41,17 +45,21 @@ router.get('/verificados', async (_req: Request, res: Response): Promise<Respons
   }
 })
 
+/**
+ * 🧾 Pedidos (persistidos en Mongo con el modelo Pedido)
+ * Estas rutas consumen los controladores:
+ *  - listarPedidos         => GET  /api/admin/pedidos
+ *  - obtenerPedido         => GET  /api/admin/pedidos/:id
+ *  - actualizarEstadoPedido=> PUT  /api/admin/pedidos/:id
+ */
+
 // ✅ GET /api/admin/pedidos – Lista completa de pedidos
-router.get('/pedidos', async (_req: Request, res: Response): Promise<Response> => {
-  try {
-    const pedidos = await obtenerTodosLosPedidos()
-    return res.status(200).json(pedidos)
-  } catch (error) {
-    console.error('❌ Error al obtener pedidos:', error)
-    return res.status(500).json({
-      error: 'Error interno al obtener pedidos'
-    })
-  }
-})
+router.get('/pedidos', listarPedidos)
+
+// ✅ GET /api/admin/pedidos/:id – Detalle de un pedido por ID
+router.get('/pedidos/:id', obtenerPedido)
+
+// ✅ PUT /api/admin/pedidos/:id – Actualizar estado del pedido
+router.put('/pedidos/:id', actualizarEstadoPedido)
 
 export default router

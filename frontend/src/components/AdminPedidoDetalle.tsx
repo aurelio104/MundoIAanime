@@ -57,7 +57,7 @@ const AdminPedidoDetalle: React.FC = () => {
   const cargarPedido = async () => {
     const ok = await isAuthenticated();
     if (!ok) {
-      logout();
+      await logout();
       navigate('/admin');
       return;
     }
@@ -66,12 +66,14 @@ const AdminPedidoDetalle: React.FC = () => {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/pedidos/${id}`, {
         credentials: 'include',
       });
+
       if (!res.ok) throw new Error('Error al buscar pedido');
       const data: Pedido = await res.json();
       setPedido(data);
       setNuevoEstado(data.estado || '');
       setLoading(false);
 
+      // Mostrar alertas del pedido si existen
       (data.alertas || []).forEach((alerta) => {
         toast((t) => (
           <span>
@@ -104,7 +106,7 @@ const AdminPedidoDetalle: React.FC = () => {
     const refInvalida = !ref || ref.length < 6 || /^0{6,}$/.test(ref) || ref.toLowerCase().includes('no detectada');
 
     if (nuevoEstado === 'pago_verificado' && (!fecha || refInvalida)) {
-      toast.error('❌ Referencia o fecha inválida. No puedes marcar como "pago_verificado" sin datos válidos.');
+      toast.error('❌ No puedes marcar como "Pago verificado" sin referencia y fecha válidas.');
       return;
     }
 
@@ -116,6 +118,7 @@ const AdminPedidoDetalle: React.FC = () => {
         credentials: 'include',
         body: JSON.stringify({ estado: nuevoEstado }),
       });
+
       if (!res.ok) throw new Error('Error actualizando estado');
       toast.success('✅ Estado actualizado correctamente');
       await cargarPedido();
@@ -130,15 +133,17 @@ const AdminPedidoDetalle: React.FC = () => {
   if (loading) return <p className="text-white font-sans p-6">Cargando...</p>;
   if (!pedido) return <p className="text-white font-sans p-6">Pedido no encontrado.</p>;
 
-  const ref = pedido?.datosPago?.referencia?.trim();
-  const fecha = pedido?.datosPago?.fecha;
-  const fechaFormateada = fecha && !isNaN(new Date(fecha).getTime()) ? new Date(fecha).toLocaleString('es-VE') : 'No detectada';
+  const ref = pedido.datosPago?.referencia?.trim() || '—';
+  const fechaPago = pedido.datosPago?.fecha;
+  const fechaFormateada = fechaPago && !isNaN(new Date(fechaPago).getTime())
+    ? new Date(fechaPago).toLocaleString('es-VE')
+    : 'No detectada';
+
   const esExpirado = ESTADOS_EXPIRADOS.includes((pedido.estado || '').toLowerCase());
 
   return (
     <section className="min-h-screen bg-black text-white py-20 px-6">
       <div className="max-w-4xl mx-auto space-y-8">
-
         <button
           onClick={() => navigate('/admin/pedidos')}
           className="text-sm bg-white text-black rounded-full px-4 py-2 hover:bg-white/80 transition font-semibold"
@@ -146,12 +151,14 @@ const AdminPedidoDetalle: React.FC = () => {
           ⬅️ Volver a pedidos
         </button>
 
+        {/* Detalle del pedido */}
         <div className="bg-white/5 backdrop-blur-lg p-6 rounded-2xl border border-white/10 shadow-glow-md">
           <h2 className="text-2xl font-bold mb-2">📦 Detalle del Pedido</h2>
           <p className="text-sm text-white/70 mb-2">ID: <span className="font-mono">{pedido.id}</span></p>
-          <p className="text-white text-lg">💰 Total: <strong>${pedido.total?.toFixed(2)}</strong></p>
+          <p className="text-white text-lg">💰 Total: <strong>${pedido.total?.toFixed(2) || '—'}</strong></p>
           <p className="text-white/70 text-sm">🕒 Fecha: {new Date(pedido.fecha || '').toLocaleString('es-VE')}</p>
 
+          {/* Estado actual */}
           <div className="mt-4">
             <label className="block text-white/80 mb-1 text-sm">📋 Estado actual</label>
             <select
@@ -167,12 +174,14 @@ const AdminPedidoDetalle: React.FC = () => {
             </select>
           </div>
 
+          {/* Datos de pago */}
           <div className="mt-4">
             <p className="text-white/80 text-sm mb-1">💳 Método de pago: <strong>{pedido.metodoPago || '—'}</strong></p>
-            <p className="text-white/80 text-sm">📎 Referencia: <strong>{ref || '—'}</strong></p>
+            <p className="text-white/80 text-sm">📎 Referencia: <strong>{ref}</strong></p>
             <p className="text-white/80 text-sm">🗓️ Fecha de pago: <strong>{fechaFormateada}</strong></p>
           </div>
 
+          {/* Botón de actualización */}
           <button
             disabled={guardando || nuevoEstado === pedido.estado}
             onClick={actualizarEstado}
@@ -182,6 +191,7 @@ const AdminPedidoDetalle: React.FC = () => {
           </button>
         </div>
 
+        {/* Historial del cliente */}
         {pedido.cliente && pedido.clienteResumen && (
           <motion.div
             className="bg-white/5 backdrop-blur-md p-6 rounded-2xl border border-white/10 text-white shadow-glow-md"

@@ -10,18 +10,27 @@ const AdminDashboard: React.FC = () => {
 
   const cargarDatos = async () => {
     try {
+      // ✅ Obtener visitas
       const resVisitas = await fetch(`${import.meta.env.VITE_API_URL}/api/visitas`, {
         credentials: 'include',
       })
+      if (!resVisitas.ok) throw new Error('Error al obtener visitas')
       const dataVisitas = await resVisitas.json()
       setVisitas(dataVisitas.total || 0)
 
-      const resPedidos = await fetch(`${import.meta.env.VITE_API_URL}/api/pedidos`, {
+      // ✅ Obtener pedidos pendientes (usuarios con estadoPago === 'pendiente')
+      const resPedidos = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/pendientes`, {
         credentials: 'include',
       })
+      if (!resPedidos.ok) throw new Error('Error al obtener pedidos')
       const dataPedidos = await resPedidos.json()
-      const pendientes = dataPedidos.filter((p: any) => !p.confirmado).length
+
+      // ✅ Contar pedidos pendientes
+      const pendientes = Array.isArray(dataPedidos)
+        ? dataPedidos.length
+        : 0
       setPedidosPendientes(pendientes)
+
     } catch (err) {
       console.error('❌ Error al cargar datos del dashboard:', err)
     } finally {
@@ -60,9 +69,12 @@ const AdminDashboard: React.FC = () => {
       <div className="absolute inset-0 bg-black/70 backdrop-blur-2xl"></div>
 
       <div className="relative z-10 flex flex-col justify-center items-center min-h-screen px-6 text-white text-center">
-        <h1 className="text-4xl font-heading font-bold mb-12 animate-slideFadeUp">Panel de Administración – MundoIAanime</h1>
+        <h1 className="text-4xl font-heading font-bold mb-12 animate-slideFadeUp">
+          Panel de Administración – MundoIAanime
+        </h1>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 w-full max-w-4xl animate-slideFadeUp">
+          {/* 📈 Botón Visitas */}
           <button
             onClick={() => navigate('/admin/visitas')}
             className="glass-button glass-shadow"
@@ -75,6 +87,7 @@ const AdminDashboard: React.FC = () => {
             <span className="text-sm opacity-70">Visitas</span>
           </button>
 
+          {/* 📦 Botón Pedidos */}
           <button
             onClick={() => navigate('/admin/pedidos')}
             className="relative glass-button glass-shadow"
@@ -90,6 +103,7 @@ const AdminDashboard: React.FC = () => {
             )}
           </button>
 
+          {/* 📚 Botón Catálogo */}
           <button
             onClick={() => navigate('/admin/productos')}
             className="glass-button glass-shadow"
@@ -101,6 +115,7 @@ const AdminDashboard: React.FC = () => {
           </button>
         </div>
 
+        {/* 🚪 Cerrar sesión */}
         <button
           onClick={async () => {
             await logout()

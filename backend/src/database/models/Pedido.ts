@@ -1,34 +1,43 @@
 // ✅ src/database/models/Pedido.ts
-
 import mongoose, { Schema, type Document } from 'mongoose'
 
 export interface PedidoDoc extends Document {
   id: string
   cliente?: string
   estado?: string
-  total?: string
+  total?: number
   totalBs?: string
   fecha?: string
   telefono?: string
+  metodoPago?: string
   datosPago?: {
     referencia?: string
     fecha?: string
   }
+  productos?: string[]
+  tallas?: string[]
+  colores?: string[]
+  preciosUnitarios?: number[]
 }
 
 const PedidoSchema = new Schema<PedidoDoc>(
   {
-    id: { type: String, required: true },
+    id: { type: String, required: true, index: true, unique: true },
     cliente: String,
-    estado: String,
-    total: String,
+    estado: { type: String, default: 'pendiente', index: true },
+    total: Number,
     totalBs: String,
     fecha: String,
     telefono: String,
+    metodoPago: String,
     datosPago: {
       referencia: String,
       fecha: String
-    }
+    },
+    productos: [String],
+    tallas: [String],
+    colores: [String],
+    preciosUnitarios: [Number]
   },
   { timestamps: true }
 )

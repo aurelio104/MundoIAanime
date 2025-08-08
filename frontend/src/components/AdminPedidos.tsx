@@ -1,100 +1,102 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-import { logout, isAuthenticated } from '../utils/auth';
-import toast from 'react-hot-toast';
+// ✅ src/pages/AdminPedidos.tsx
+
+import React, { useEffect, useRef, useState } from 'react'
+import { motion } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
+import { logout, isAuthenticated } from '../utils/auth'
+import toast from 'react-hot-toast'
 
 interface Pedido {
-  id: string;
-  cliente?: string;
-  estado?: string;
-  total?: string;
-  totalBs?: string;
-  fecha?: string;
+  id: string
+  cliente?: string
+  estado?: string
+  total?: string
+  totalBs?: string
+  fecha?: string
   datosPago?: {
-    referencia?: string;
-    fecha?: string;
-  };
-  telefono?: string;
+    referencia?: string
+    fecha?: string
+  }
+  telefono?: string
 }
 
 const AdminPedidos: React.FC = () => {
-  const [pedidos, setPedidos] = useState<Pedido[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [hayNotificacion, setHayNotificacion] = useState<boolean>(false);
-  const [filtro, setFiltro] = useState<string>('');
-  const [estadoFiltrado, setEstadoFiltrado] = useState<string | null>(null);
-  const navigate = useNavigate();
-  const ultimoIdRef = useRef<string | null>(null);
+  const [pedidos, setPedidos] = useState<Pedido[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
+  const [hayNotificacion, setHayNotificacion] = useState<boolean>(false)
+  const [filtro, setFiltro] = useState<string>('')
+  const [estadoFiltrado, setEstadoFiltrado] = useState<string | null>(null)
+  const navigate = useNavigate()
+  const ultimoIdRef = useRef<string | null>(null)
 
   const reproducirAlerta = () => {
     try {
-      const sonido = new Audio('/alerta-MundoIAanime.mp3');
-      sonido.play();
-      if (navigator.vibrate) navigator.vibrate([300, 100, 300]);
+      const sonido = new Audio('/alerta-MundoIAanime.mp3')
+      sonido.play()
+      if (navigator.vibrate) navigator.vibrate([300, 100, 300])
     } catch (e) {
-      console.warn('⚠️ No se pudo reproducir la alerta:', e);
+      console.warn('⚠️ No se pudo reproducir la alerta:', e)
     }
-  };
+  }
 
   const cargarPedidos = async () => {
     try {
-      const auth = await isAuthenticated();
-      if (!auth) throw new Error('Sesión inválida');
+      const auth = await isAuthenticated()
+      if (!auth) throw new Error('Sesión inválida')
 
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/pedidos`, {
         method: 'GET',
         credentials: 'include'
-      });
+      })
 
-      if (!res.ok) throw new Error(`Servidor respondió con error ${res.status}`);
+      if (!res.ok) throw new Error(`Servidor respondió con error ${res.status}`)
 
-      const data: Pedido[] = await res.json();
-      const ordenados = data.sort((a, b) => new Date(b.fecha || '').getTime() - new Date(a.fecha || '').getTime());
+      const data: Pedido[] = await res.json()
+      const ordenados = data.sort((a, b) => new Date(b.fecha || '').getTime() - new Date(a.fecha || '').getTime())
 
       if (ordenados.length > 0 && ordenados[0].id !== ultimoIdRef.current) {
         if (ultimoIdRef.current !== null) {
-          toast.success('📦 ¡Nuevo pedido recibido!');
-          reproducirAlerta();
-          setHayNotificacion(true);
+          toast.success('📦 ¡Nuevo pedido recibido!')
+          reproducirAlerta()
+          setHayNotificacion(true)
         }
-        ultimoIdRef.current = ordenados[0].id;
+        ultimoIdRef.current = ordenados[0].id
       }
 
-      setPedidos(ordenados);
+      setPedidos(ordenados)
     } catch (err) {
-      console.error('❌ Error al cargar pedidos:', err);
-      toast.error('No se pudieron cargar los pedidos. Verifica la conexión.');
+      console.error('❌ Error al cargar pedidos:', err)
+      toast.error('No se pudieron cargar los pedidos. Verifica la conexión.')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   useEffect(() => {
-    cargarPedidos();
-    const intervalo = setInterval(cargarPedidos, 10000);
-    return () => clearInterval(intervalo);
-  }, []);
+    cargarPedidos()
+    const intervalo = setInterval(cargarPedidos, 10000)
+    return () => clearInterval(intervalo)
+  }, [])
 
   const resumenPago = (datosPago?: Pedido['datosPago']): string => {
-    const ref = datosPago?.referencia?.trim();
-    const fecha = datosPago?.fecha;
-    const refInvalida = !ref || ref.length < 6 || /^0{6,}$/.test(ref) || ref.toLowerCase().includes('no detectada');
-    if (!fecha || refInvalida) return '—';
-    return `Ref: ${ref}`;
-  };
+    const ref = datosPago?.referencia?.trim()
+    const fecha = datosPago?.fecha
+    const refInvalida = !ref || ref.length < 6 || /^0{6,}$/.test(ref) || ref.toLowerCase().includes('no detectada')
+    if (!fecha || refInvalida) return '—'
+    return `Ref: ${ref}`
+  }
 
   const claseEstado = (estado?: string) => {
-    const e = (estado || '').toLowerCase();
-    if (e.includes('cancelado')) return 'text-red-500';
-    if (e.includes('entregado') || e.includes('recibido')) return 'text-green-400';
-    if (e.includes('verificado') || e.includes('fabrica') || e.includes('empaquetado')) return 'text-yellow-300';
-    if (e.includes('enviado') || e.includes('camino')) return 'text-blue-300';
-    return 'text-white/60';
-  };
+    const e = (estado || '').toLowerCase()
+    if (e.includes('cancelado')) return 'text-red-500'
+    if (e.includes('entregado') || e.includes('recibido')) return 'text-green-400'
+    if (e.includes('verificado') || e.includes('fabrica') || e.includes('empaquetado')) return 'text-yellow-300'
+    if (e.includes('enviado') || e.includes('camino')) return 'text-blue-300'
+    return 'text-white/60'
+  }
 
   const datosFiltrados = pedidos.filter((p) => {
-    const ref = resumenPago(p.datosPago);
+    const ref = resumenPago(p.datosPago)
     const valores = [
       p.id,
       p.cliente,
@@ -102,22 +104,22 @@ const AdminPedidos: React.FC = () => {
       p.total,
       new Date(p.fecha || '').toLocaleString('es-VE'),
       ref,
-    ].join(' ').toLowerCase();
-    const coincideTexto = valores.includes(filtro.toLowerCase());
-    const coincideEstado = !estadoFiltrado || (p.estado || '').toLowerCase() === estadoFiltrado;
-    return coincideTexto && coincideEstado;
-  });
+    ].join(' ').toLowerCase()
+    const coincideTexto = valores.includes(filtro.toLowerCase())
+    const coincideEstado = !estadoFiltrado || (p.estado || '').toLowerCase() === estadoFiltrado
+    return coincideTexto && coincideEstado
+  })
 
   const handlePedidoClick = (id: string) => {
-    setHayNotificacion(false);
-    navigate(`/admin/pedidos/${id}`);
-  };
+    setHayNotificacion(false)
+    navigate(`/admin/pedidos/${id}`)
+  }
 
-  const totalPedidos = pedidos.length;
-  const totalCancelados = pedidos.filter(p => p.estado?.toLowerCase().includes('cancelado')).length;
+  const totalPedidos = pedidos.length
+  const totalCancelados = pedidos.filter(p => p.estado?.toLowerCase().includes('cancelado')).length
   const totalEnProceso = pedidos.filter(p =>
     ['pendiente', 'pago_verificado', 'en_fabrica', 'empaquetado', 'enviado'].includes((p.estado || '').toLowerCase())
-  ).length;
+  ).length
 
   const crearWidget = (label: string, valor: string | number, color: string, estadoTarget: string | null) => (
     <motion.div
@@ -130,11 +132,12 @@ const AdminPedidos: React.FC = () => {
       <h3 className="text-sm text-white/70 font-medium">{label}</h3>
       <p className="text-2xl font-bold text-white">{valor}</p>
     </motion.div>
-  );
+  )
 
   return (
     <section className="min-h-screen bg-black text-white py-20 px-6">
       <div className="max-w-6xl mx-auto space-y-10">
+
         {/* Encabezado y filtro */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <h1 className="text-3xl font-heading font-bold">📦 Pedidos registrados</h1>
@@ -186,7 +189,7 @@ const AdminPedidos: React.FC = () => {
         </motion.div>
       </div>
     </section>
-  );
-};
+  )
+}
 
-export default AdminPedidos;
+export default AdminPedidos
