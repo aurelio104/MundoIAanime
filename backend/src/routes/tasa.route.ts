@@ -3,19 +3,21 @@
 import { Router, type Request, type Response } from 'express'
 import axios from 'axios'
 
-const router = Router()
+const router: import('express').Router = Router()
 
 // 📈 GET /api/tasa-bcv – Obtener tasa oficial del BCV
 router.get('/tasa-bcv', async (_req: Request, res: Response): Promise<Response> => {
   try {
     const { data } = await axios.get('https://ve.dolarapi.com/v1/dolares')
 
-    const oficial = data.find(
-      (item: any) =>
-        typeof item === 'object' &&
-        item?.fuente?.toLowerCase?.() === 'oficial' &&
-        typeof item?.promedio === 'string'
-    )
+    const oficial = Array.isArray(data)
+      ? data.find(
+          (item: any) =>
+            typeof item === 'object' &&
+            item?.fuente?.toLowerCase?.() === 'oficial' &&
+            typeof item?.promedio === 'string'
+        )
+      : null
 
     const tasa = oficial ? parseFloat(oficial.promedio) : null
 
