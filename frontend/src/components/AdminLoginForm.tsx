@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Eye, EyeOff } from 'lucide-react'
-import { login, isAuthenticated } from '../utils/auth'
+import { login, isAuthenticated } from '@/utils/auth'
 import LoadingSpinner from './LoadingSpinner'
 
 const AdminLoginForm: React.FC = () => {
@@ -11,15 +11,16 @@ const AdminLoginForm: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
   const navigate = useNavigate()
   const emailRef = useRef<HTMLInputElement>(null)
 
-  // Autofocus
+  // Autofocus en input de email
   useEffect(() => {
     emailRef.current?.focus()
   }, [])
 
-  // ✅ Verificar sesión activa (solo si ya estás logueado previamente)
+  // ✅ Verificar sesión activa al cargar
   useEffect(() => {
     const verificarSesion = async () => {
       try {
@@ -39,27 +40,30 @@ const AdminLoginForm: React.FC = () => {
     verificarSesion()
   }, [navigate])
 
-  // ✅ Manejar login con redirección real
+  // ✅ Manejar login con redirección real (Safari compatible)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setSubmitting(true)
 
     try {
       const success = await login(email, password)
 
       if (success) {
-        // ⛳ Redirección real para que Safari almacene la cookie
+        // 🔐 Redirección real para que Safari almacene cookies correctamente
         window.location.href = '/admin/dashboard'
       } else {
         setError('❌ Credenciales inválidas o error de conexión')
+        setSubmitting(false)
       }
     } catch (err) {
       console.error('❌ Error en login:', err)
       setError('❌ Error al intentar iniciar sesión')
+      setSubmitting(false)
     }
   }
 
-  // ⏳ Mostrar spinner mientras verifica sesión
+  // ⏳ Mostrar spinner mientras verifica sesión activa
   if (loading) {
     return <LoadingSpinner message="Verificando sesión activa..." />
   }
@@ -73,7 +77,7 @@ const AdminLoginForm: React.FC = () => {
         backgroundPosition: 'center'
       }}
     >
-      {/* Fondo oscuro + blur */}
+      {/* Capa negra + blur */}
       <motion.div
         className="absolute inset-0 bg-black z-0"
         initial={{ opacity: 1 }}
@@ -87,7 +91,7 @@ const AdminLoginForm: React.FC = () => {
         transition={{ duration: 1.8, delay: 0.6 }}
       />
 
-      {/* Contenedor del formulario */}
+      {/* Contenido del formulario */}
       <motion.div
         className="relative z-20 px-6 text-white flex flex-col items-center space-y-8 w-full max-w-sm font-sans"
         initial="hidden"
@@ -129,7 +133,7 @@ const AdminLoginForm: React.FC = () => {
             />
             <button
               type="button"
-              onClick={() => setShowPassword((prev) => !prev)}
+              onClick={() => setShowPassword(prev => !prev)}
               className="absolute top-1/2 right-4 transform -translate-y-1/2 text-white hover:text-white/80"
               aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
             >
@@ -147,9 +151,14 @@ const AdminLoginForm: React.FC = () => {
           {/* Botón de login */}
           <button
             type="submit"
-            className="w-full py-3 border border-white text-white text-lg uppercase tracking-wider hover:bg-white hover:text-black transition rounded-full shadow-md backdrop-blur-sm font-sans"
+            disabled={submitting}
+            className={`w-full py-3 border border-white text-white text-lg uppercase tracking-wider rounded-full shadow-md backdrop-blur-sm transition font-sans ${
+              submitting
+                ? 'opacity-60 pointer-events-none'
+                : 'hover:bg-white hover:text-black'
+            }`}
           >
-            Iniciar sesión
+            {submitting ? 'Ingresando...' : 'Iniciar sesión'}
           </button>
 
           {/* Volver */}

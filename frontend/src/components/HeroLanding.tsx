@@ -1,13 +1,15 @@
-// HeroLanding.tsx — versión TypeScript
+// ✅ FILE: HeroLanding.tsx
 
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { API_URL } from '@/utils/auth';
 
 const HeroLanding: React.FC = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [canInstall, setCanInstall] = useState<boolean>(false);
-  const [showModal, setShowModal] = useState<boolean>(false);
+  const [canInstall, setCanInstall] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
+  // ✅ Manejar instalación PWA
   useEffect(() => {
     const handler = (e: any) => {
       e.preventDefault();
@@ -18,15 +20,16 @@ const HeroLanding: React.FC = () => {
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
 
+  // ✅ Registrar visita al backend
   useEffect(() => {
-  fetch('https://tudominio.com/api/visitas', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include', // si usas cookies
-  }).catch((error) => console.error('Error registrando visita:', error));
-}, []);
+    fetch(`${API_URL}/api/visitas`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include', // Importante para cookies HttpOnly
+    }).catch((error) => console.error('❌ Error registrando visita:', error));
+  }, []);
 
-
+  // ✅ Animación de scroll automático
   useEffect(() => {
     setTimeout(() => {
       const start = window.scrollY;
@@ -45,6 +48,7 @@ const HeroLanding: React.FC = () => {
     }, 3500);
   }, []);
 
+  // ✅ Mostrar modal TikTok
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowModal(true);
@@ -52,18 +56,21 @@ const HeroLanding: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  useEffect(() => {
-    if (showModal) {
-      const script = document.createElement('script');
-      script.src = 'https://www.tiktok.com/embed.js';
-      script.async = true;
-      document.body.appendChild(script);
-      return () => {
-        document.body.removeChild(script);
-      };
-    }
-  }, [showModal]);
+  // ✅ Insertar script de TikTok al abrir modal
+useEffect(() => {
+  if (!showModal) return;
 
+  const script = document.createElement('script');
+  script.src = 'https://www.tiktok.com/embed.js';
+  script.async = true;
+  document.body.appendChild(script);
+
+  return () => {
+    document.body.removeChild(script);
+  };
+}, [showModal]);
+
+  // ✅ Ejecutar instalación PWA
   const handleInstall = () => {
     if (deferredPrompt) {
       deferredPrompt.prompt();
@@ -73,6 +80,7 @@ const HeroLanding: React.FC = () => {
     }
   };
 
+  // ✅ Scroll a catálogo
   const scrollToCatalog = () => {
     const section = document.querySelector('#tulio-catalogo');
     if (section) {
@@ -93,49 +101,48 @@ const HeroLanding: React.FC = () => {
       }}
     >
       {showModal && (
-<motion.div
-  className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center px-4"
-  initial={{ opacity: 0 }}
-  animate={{ opacity: 1 }}
-  exit={{ opacity: 0 }}
-  transition={{ duration: 0.4 }}
->
-  <motion.div
-    className="w-full max-w-lg sm:max-w-md md:max-w-sm glass text-white p-6 relative h-[80%] overflow-auto"
-    initial={{ y: 100, opacity: 0 }}
-    animate={{ y: 0, opacity: 1 }}
-    transition={{ duration: 0.5, ease: 'easeOut' }}
-  >
-    <button
-      onClick={() => setShowModal(false)}
-      className="absolute top-3 right-4 text-white text-xl font-bold hover:text-red-400 transition"
-      aria-label="Cerrar"
-    >
-      ×
-    </button>
-    <div className="w-full">
-      <blockquote
-        className="tiktok-embed w-full"
-        cite="https://www.tiktok.com/@mundoiaanime/video/7522630469943315725"
-        data-video-id="7522630469943315725"
-        style={{ maxWidth: '100%', minWidth: '100%' }}
-      >
-        <section>
-          <a
-            target="_blank"
-            rel="noopener noreferrer"
-            title="@mundoiaanime"
-            href="https://www.tiktok.com/@mundoiaanime?refer=embed"
+        <motion.div
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center px-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          <motion.div
+            className="w-full max-w-lg sm:max-w-md md:max-w-sm glass text-white p-6 relative h-[80%] overflow-auto"
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
           >
-            @mundoiaanime
-          </a>{' '}
-          Nezuko Kamado caminando entre las ruinas. 📌 Visual Art AI.
-        </section>
-      </blockquote>
-    </div>
-  </motion.div>
-</motion.div>
-
+            <button
+              onClick={() => setShowModal(false)}
+              className="absolute top-3 right-4 text-white text-xl font-bold hover:text-red-400 transition"
+              aria-label="Cerrar"
+            >
+              ×
+            </button>
+            <div className="w-full">
+              <blockquote
+                className="tiktok-embed w-full"
+                cite="https://www.tiktok.com/@mundoiaanime/video/7522630469943315725"
+                data-video-id="7522630469943315725"
+                style={{ maxWidth: '100%', minWidth: '100%' }}
+              >
+                <section>
+                  <a
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="@mundoiaanime"
+                    href="https://www.tiktok.com/@mundoiaanime?refer=embed"
+                  >
+                    @mundoiaanime
+                  </a>{' '}
+                  Nezuko Kamado caminando entre las ruinas. 📌 Visual Art AI.
+                </section>
+              </blockquote>
+            </div>
+          </motion.div>
+        </motion.div>
       )}
 
       <motion.div
