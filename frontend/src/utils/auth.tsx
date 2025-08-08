@@ -8,9 +8,9 @@ const isDev = import.meta.env.DEV
 // 📡 Backend URL dinámico
 export const API_URL = isDev
   ? 'http://localhost:5000'
-  : import.meta.env.VITE_API_URL || 'https://appropriate-wilmette-aurelio104-e8ed3ae9.koyeb.app'
+  : import.meta.env.VITE_API_URL || 'https://api.mundoiaanime.com'
 
-// 🍪 Incluir cookies en TODAS las peticiones (requerido para cookies Secure + SameSite=None)
+// 🍪 Incluir cookies en TODAS las peticiones
 axios.defaults.withCredentials = true
 
 // 🧼 Limpiar inputs
@@ -28,12 +28,7 @@ export const login = async (email: string, password: string): Promise<boolean> =
       },
       {
         withCredentials: true,
-        timeout: 10000,
-        headers: {
-          // 🔒 Necesario para Safari y producción
-          'Content-Type': 'application/json',
-          'Origin': isDev ? 'http://localhost:5173' : 'https://mundo-i-aanime-hxbt.vercel.app'
-        }
+        timeout: 10000
       }
     )
 
@@ -53,10 +48,7 @@ export const isAuthenticated = async (): Promise<boolean> => {
 
     const res = await axios.get(`${API_URL}/api/check-auth`, {
       withCredentials: true,
-      timeout: 8000,
-      headers: {
-        'Origin': isDev ? 'http://localhost:5173' : 'https://mundo-i-aanime-hxbt.vercel.app'
-      }
+      timeout: 8000
     })
 
     const authenticated = res.status === 200 && res.data?.authenticated === true
@@ -75,10 +67,7 @@ export const logout = async (): Promise<void> => {
       `${API_URL}/api/logout`,
       {},
       {
-        withCredentials: true,
-        headers: {
-          'Origin': isDev ? 'http://localhost:5173' : 'https://mundo-i-aanime-hxbt.vercel.app'
-        }
+        withCredentials: true
       }
     )
     console.log('👋 Logout completado correctamente')
