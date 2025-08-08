@@ -109,7 +109,7 @@ const DashboardProductos: React.FC = () => {
         animate="visible"
         variants={{ visible: { transition: { staggerChildren: 0.25 } } }}
       >
-        <motion.img src="/LogoB.png" alt="Logo MundoIAanime" className="w-20 h-20 mb-6 object-contain"
+        <motion.img src="/logo.png" alt="Logo MundoIAanime" className="w-20 h-20 mb-6 object-contain"
           initial={{ scale: 0 }} animate={{ scale: 2, y: -20 }} transition={{ duration: 1.5, delay: 0.5 }} />
 
         <motion.h2 className="text-3xl font-heading uppercase tracking-wider mb-6"

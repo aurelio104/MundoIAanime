@@ -16,7 +16,7 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ message = 'Verificando 
     >
       {/* Logo animado */}
       <motion.img
-        src="/LogoB.png"
+        src="/logo.png"
         alt="MundoIAanime Logo"
         className="w-20 h-20 object-center"
         animate={{ scale: [1, 1.2, 1] }}
