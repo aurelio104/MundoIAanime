@@ -1,25 +1,36 @@
-// ✅ FILE: routes/tasa.route.ts
+// ✅ FILE: src/routes/tasa.route.ts
 
-import { Router, type Router as RouterType, type Request, type Response } from 'express'
+import {
+  Router,
+  type Router as RouterType,
+  type Request,
+  type Response
+} from 'express'
 import axios from 'axios'
 
-// ✅ Tipado explícito para evitar errores TS2742
 const router: RouterType = Router()
 
-// 📈 Ruta para obtener la tasa del BCV
-router.get('/tasa-bcv', async (_req: Request, res: Response) => {
+// 📈 Ruta para obtener la tasa oficial del BCV desde dolarapi.com
+router.get('/tasa-bcv', async (_req: Request, res: Response): Promise<Response> => {
   try {
-    const response = await axios.get('https://ve.dolarapi.com/v1/dolares')
-    const oficial = response.data.find((x: any) => x.fuente?.toLowerCase() === 'oficial')
-    const tasa = parseFloat(oficial?.promedio)
+    const { data } = await axios.get('https://ve.dolarapi.com/v1/dolares')
 
-    if (tasa && tasa > 0) {
-      return res.json({ tasa })
-    } else {
-      return res.status(400).json({ error: 'Tasa no válida' })
+    const oficial = data.find(
+      (item: any) =>
+        typeof item === 'object' &&
+        item?.fuente?.toLowerCase?.() === 'oficial' &&
+        typeof item?.promedio === 'string'
+    )
+
+    const tasa = oficial ? parseFloat(oficial.promedio) : null
+
+    if (tasa && !isNaN(tasa) && tasa > 0) {
+      return res.status(200).json({ tasa })
     }
-  } catch (err) {
-    console.error('❌ Error al obtener la tasa BCV:', err)
+
+    return res.status(404).json({ error: 'Tasa oficial no encontrada o inválida' })
+  } catch (error) {
+    console.error('❌ Error al obtener la tasa BCV:', error)
     return res.status(500).json({ error: 'Error al obtener la tasa BCV' })
   }
 })

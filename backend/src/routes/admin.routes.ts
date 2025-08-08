@@ -1,15 +1,14 @@
 // ✅ FILE: src/routes/admin.routes.ts
 
-import { Router, Request, Response } from 'express'
+import { Router, type Request, type Response } from 'express'
 import {
   obtenerUsuariosConPagoPendiente,
   obtenerUsuariosConPagoVerificado
 } from '../memory/memory.mongo.js'
 
-// ✅ Tipado explícito para evitar TS2742 al compilar en Koyeb
-const router: import('express').Router = Router()
+const router = Router()
 
-// 📦 Obtener usuarios con pagos pendientes
+// 📦 GET /api/admin/pendientes – Usuarios con pago pendiente
 router.get('/pendientes', async (_req: Request, res: Response): Promise<Response> => {
   try {
     const usuarios = await obtenerUsuariosConPagoPendiente()
@@ -22,7 +21,7 @@ router.get('/pendientes', async (_req: Request, res: Response): Promise<Response
   }
 })
 
-// ✅ Obtener usuarios con pagos verificados
+// ✅ GET /api/admin/verificados – Usuarios con pago verificado
 router.get('/verificados', async (_req: Request, res: Response): Promise<Response> => {
   try {
     const usuarios = await obtenerUsuariosConPagoVerificado()

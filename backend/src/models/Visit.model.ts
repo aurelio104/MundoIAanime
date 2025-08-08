@@ -1,10 +1,21 @@
-// src/models/Visit.model.ts
-import mongoose from 'mongoose';
+// ✅ FILE: src/models/Visit.model.ts
 
-const visitSchema = new mongoose.Schema({
-  ip: String,
-  userAgent: String,
+import { Schema, model, type Document } from 'mongoose'
+
+// 🧠 Tipado de documento
+export interface IVisit extends Document {
+  ip?: string
+  userAgent?: string
+  timestamp: Date
+}
+
+// 🧬 Esquema de Mongoose
+const visitSchema = new Schema<IVisit>({
+  ip: { type: String },
+  userAgent: { type: String },
   timestamp: { type: Date, default: Date.now }
-});
+})
 
-export default mongoose.model('Visit', visitSchema);
+// 📦 Exportar modelo
+const Visit = model<IVisit>('Visit', visitSchema)
+export default Visit
