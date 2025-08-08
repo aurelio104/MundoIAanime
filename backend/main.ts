@@ -21,14 +21,14 @@ import tasaRoute from './src/routes/tasa.route.js'
 import visitasRoute from './src/routes/visitas.route.js'
 import { authMiddleware } from './src/middleware/verifyToken.js'
 
-// 🌱 Cargar variables de entorno
+// 🌱 Variables de entorno
 dotenv.config({ path: path.resolve('.env') })
 console.log('🚦 Iniciando servidor MundoIAanime + WhatsApp bot...')
 
 // 🧪 Validaciones críticas
 if (!process.env.JWT_SECRET) throw new Error('❌ Falta definir JWT_SECRET en el .env')
 
-// ✅ Configuración base
+// ✅ Configuración general
 const PORT = Number(process.env.PORT) || 8000
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/MundoIAanime'
 const SELF_URL = process.env.SELF_URL || 'https://api.mundoiaanime.com'
@@ -39,7 +39,6 @@ const AUTH_FOLDER = path.resolve(process.env.AUTH_FOLDER || './auth-bot1')
 process.on('unhandledRejection', (reason) => {
   console.error('❌ PROMESA NO MANEJADA:', reason)
 })
-
 process.on('uncaughtException', (err) => {
   console.error('❌ EXCEPCIÓN NO CAPTURADA:', err)
   process.exit(1)
@@ -54,24 +53,32 @@ async function startServer() {
     console.log('✅ Conectado a MongoDB')
 
     const app: Application = express()
-    app.set('trust proxy', 1)
+    app.set('trust proxy', 1) // necesario para cookies y HTTPS en Koyeb
 
     // 🛡️ Seguridad y CORS
+    const allowedOrigins = isProduction
+      ? ['https://mundoiaanime.com', 'https://admin.mundoiaanime.com']
+      : ['http://localhost:5173', 'http://localhost:4173']
+
     app.use(helmet({ contentSecurityPolicy: false }))
     app.use(cors({
-      origin: isProduction
-        ? 'https://admin.mundoiaanime.com'
-        : 'http://localhost:5173',
+      origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+          callback(null, true)
+        } else {
+          callback(new Error('❌ Origen no permitido por CORS'))
+        }
+      },
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
     }))
 
+    // 🧱 Middlewares básicos
     app.use(rateLimit({
-      windowMs: 15 * 60 * 1000, // 15 min
+      windowMs: 15 * 60 * 1000,
       max: 100,
       message: { error: '⚠️ Demasiadas solicitudes, intenta más tarde.' }
     }))
-
     app.use(express.json({ limit: '10kb' }))
     app.use(cookieParser())
 
@@ -92,11 +99,11 @@ async function startServer() {
     app.use('/api', tasaRoute)
     app.use(visitasRoute)
 
-    // 🔐 Rutas privadas (requieren JWT)
+    // 🔐 Rutas privadas
     app.use('/api/catalog', authMiddleware, catalogAdminRoutes)
     app.use('/api/admin', authMiddleware, adminPedidosRoute)
 
-    // 🧹 Eliminar usuario manualmente (admin only)
+    // 🧹 Eliminar usuario (solo admin)
     app.post('/api/deleteUser', authMiddleware, async (req: Request, res: Response) => {
       const { email } = req.body
       if (!email) return res.status(400).json({ error: 'Falta correo del usuario' })
@@ -118,7 +125,7 @@ async function startServer() {
       axios.get(`${SELF_URL}/`)
         .then(() => console.log('📡 Ping keep-alive'))
         .catch((err) => console.error('⚠️ Ping fallido:', err.message))
-    }, 12 * 60 * 1000) // Cada 12 minutos
+    }, 12 * 60 * 1000)
 
     // 🚀 Iniciar servidor
     app.listen(PORT, () => {
