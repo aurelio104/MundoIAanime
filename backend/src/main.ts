@@ -10,15 +10,15 @@ import path from 'path'
 import axios from 'axios'
 
 // Internos
-import { startBot } from './src/core/client.js'
-import User from './src/models/User.model.js'
-import catalogAdminRoutes from './src/routes/catalog.admin.routes.js'
-import adminPedidosRoute from './src/routes/admin.routes.js'
-import registerAdminRoute from './src/routes/registerAdmin.route.js'
-import authRoutes from './src/routes/auth.routes.js'
-import tasaRoute from './src/routes/tasa.route.js'
-import visitasRoute from './src/routes/visitas.route.js'
-import { authMiddleware } from './src/middleware/verifyToken.js'
+import { startBot } from './core/client.js'
+import User from './models/User.model.js'
+import catalogAdminRoutes from './routes/catalog.admin.routes.js'
+import adminPedidosRoute from './routes/admin.routes.js'
+import registerAdminRoute from './routes/registerAdmin.route.js'
+import authRoutes from './routes/auth.routes.js'
+import tasaRoute from './routes/tasa.route.js'
+import visitasRoute from './routes/visitas.route.js'
+import { authMiddleware } from './middleware/verifyToken.js'
 
 // Variables de entorno
 dotenv.config({ path: path.resolve('.env') })

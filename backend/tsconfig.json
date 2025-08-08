@@ -14,8 +14,8 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "outDir": "./dist",
-    "rootDir": "src", // ✅ corregido
-    "baseUrl": "./src", // ✅ baseUrl cambia a src
+    "rootDir": "./src",                   
+    "baseUrl": "./src",
     "paths": {
       "@intelligence/*": ["intelligence/*"],
       "@memory/*": ["memory/*"],
@@ -23,7 +23,7 @@
       "@services/*": ["services/*"],
       "@utils/*": ["utils/*"],
       "@schemas/*": ["schemas/*"],
-      "@models/*": ["database/models/*"],
+      "@models/*": ["models/*"],
       "@types/*": ["types/*"],
       "@data/*": ["data/*"],
       "@handlers/*": ["handlers/*"],
