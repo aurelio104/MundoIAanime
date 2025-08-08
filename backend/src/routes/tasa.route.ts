@@ -1,9 +1,15 @@
 // ✅ FILE: src/routes/tasa.route.ts
 
-import { Router, type Request, type Response } from 'express'
+import {
+  Router,
+  type Request,
+  type Response,
+  type Router as RouterType
+} from 'express'
 import axios from 'axios'
 
-const router: import('express').Router = Router()
+// ✅ Corrección crítica de tipado explícito
+const router: RouterType = Router()
 
 // 📈 GET /api/tasa-bcv – Obtener tasa oficial del BCV
 router.get('/tasa-bcv', async (_req: Request, res: Response): Promise<Response> => {
