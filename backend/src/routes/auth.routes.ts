@@ -8,14 +8,13 @@ import {
 } from '../controllers/login.controller.js'
 import { authMiddleware } from '../middleware/verifyToken.js'
 
-// ✅ Tipado explícito para evitar TS2742
 const router: RouterType = Router()
 
-// Public
+// Rutas públicas
 router.post('/login', loginController)
 router.post('/logout', logoutController)
 
-// Protegido con middleware JWT
+// Ruta protegida para verificar si el token es válido
 router.get('/check-auth', authMiddleware, checkAuthController)
 
 export default router

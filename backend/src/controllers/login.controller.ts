@@ -1,4 +1,5 @@
 // ✅ FILE: controllers/login.controller.ts
+
 import { Request, Response } from 'express'
 import jwt from 'jsonwebtoken'
 import { compare } from 'bcryptjs'
@@ -7,7 +8,10 @@ import { AuthenticatedRequest } from '../middleware/verifyToken.js'
 
 const isProduction = process.env.NODE_ENV === 'production'
 
-// 🔐 POST /api/login
+/* 
+  🔐 POST /api/login
+  Inicia sesión, valida credenciales, crea token y lo guarda en cookie segura
+*/
 export const loginController = async (req: Request, res: Response) => {
   const { email, password } = req.body
 
@@ -25,19 +29,17 @@ export const loginController = async (req: Request, res: Response) => {
     const token = jwt.sign(
       { userId: user._id, correo: user.correo, rol: user.rol },
       process.env.JWT_SECRET!,
-      { expiresIn: '1h' }
+      { expiresIn: '2h' }
     )
 
-    // 🍪 Set cookie según entorno
-// login.controller.ts (ejemplo de Express)
-res.cookie('token', token, {
-  httpOnly: true,
-  secure: true,
-  sameSite: 'none', // IMPORTANTE para cross-site cookies
-  domain: '.mundoiaanime.com', // <-- esto habilita subdominios
-  maxAge: 1000 * 60 * 60 * 24 * 7, // 7 días
-});
-
+    // 🍪 Guardar token en cookie segura
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none', // Necesario para cross-site (Vercel ↔ Koyeb)
+      domain: '.mundoiaanime.com', // Para compartir cookie entre subdominios
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 días
+    })
 
     console.log(`✅ Login exitoso para ${user.correo}`)
 
@@ -48,12 +50,16 @@ res.cookie('token', token, {
   }
 }
 
-// 🔐 POST /api/logout
+/*
+  🔐 POST /api/logout
+  Elimina la cookie de sesión
+*/
 export const logoutController = (_req: Request, res: Response) => {
   res.clearCookie('token', {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? 'none' : 'lax',
+    secure: true,
+    sameSite: 'none',
+    domain: '.mundoiaanime.com',
     path: '/',
   })
 
@@ -61,7 +67,10 @@ export const logoutController = (_req: Request, res: Response) => {
   return res.status(200).json({ message: 'Sesión cerrada con éxito' })
 }
 
-// 🔐 GET /api/check-auth
+/*
+  🔐 GET /api/check-auth
+  Verifica que el token sea válido y retorna info del usuario
+*/
 export const checkAuthController = (req: AuthenticatedRequest, res: Response) => {
   if (!req.user) {
     return res.status(401).json({ error: 'No autenticado' })
