@@ -1,5 +1,3 @@
-// AdminPedidoDetalle.tsx — versión convertida a TypeScript
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -47,28 +45,14 @@ const estadosOpciones = [
 
 const ESTADOS_EXPIRADOS = ['entregado', 'recibido', 'cancelado'];
 
-const formatearEstado = (estado: string) => {
-  const mapa = Object.fromEntries(estadosOpciones.map((e) => [e.value, e.label]));
-  return mapa[estado] || estado;
-};
-
-const claseEstado = (estado?: string) => {
-  const e = (estado || '').toLowerCase();
-  if (e.includes('cancelado')) return 'text-red-600';
-  if (e.includes('entregado') || e.includes('recibido')) return 'text-green-600';
-  if (e.includes('verificado') || e.includes('fabrica') || e.includes('empaquetado')) return 'text-yellow-600';
-  if (e.includes('enviado') || e.includes('camino')) return 'text-blue-600';
-  return 'text-gray-700';
-};
-
 const AdminPedidoDetalle: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
   const [pedido, setPedido] = useState<Pedido | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [nuevoEstado, setNuevoEstado] = useState<string>('');
-  const [guardando, setGuardando] = useState<boolean>(false);
+  const [loading, setLoading] = useState(true);
+  const [nuevoEstado, setNuevoEstado] = useState('');
+  const [guardando, setGuardando] = useState(false);
 
   const cargarPedido = async () => {
     const ok = await isAuthenticated();
@@ -143,34 +127,80 @@ const AdminPedidoDetalle: React.FC = () => {
     }
   };
 
-  if (loading) return <p className="text-white font-sans">Cargando...</p>;
-  if (!pedido) return <p className="text-white font-sans">Pedido no encontrado.</p>;
+  if (loading) return <p className="text-white font-sans p-6">Cargando...</p>;
+  if (!pedido) return <p className="text-white font-sans p-6">Pedido no encontrado.</p>;
 
-  const esExpirado = ESTADOS_EXPIRADOS.includes((pedido.estado || '').toLowerCase());
   const ref = pedido?.datosPago?.referencia?.trim();
   const fecha = pedido?.datosPago?.fecha;
-  const refInvalida = !ref || ref.length < 6 || /^0{6,}$/.test(ref) || ref.toLowerCase().includes('no detectada');
   const fechaFormateada = fecha && !isNaN(new Date(fecha).getTime()) ? new Date(fecha).toLocaleString('es-VE') : 'No detectada';
-  const pdfDisponible = pedido.estado === 'pago_verificado' && !refInvalida && fecha && fechaFormateada !== 'No detectada';
+  const esExpirado = ESTADOS_EXPIRADOS.includes((pedido.estado || '').toLowerCase());
 
-  const historicoCliente = pedido?.cliente && pedido?.clienteResumen ? (
-    <motion.div
-      className="mt-6 text-left backdrop-blur-sm bg-white/30 rounded-xl p-4 border-l-4 border-white/40 text-white shadow transition-transform hover:scale-105 font-sans"
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8 }}
-    >
-      <h3 className="text-lg font-bold mb-2">📊 Historial del Cliente</h3>
-      <p><strong>Nombre:</strong> {pedido.cliente}</p>
-      <p><strong>Teléfono:</strong> {(pedido.telefono || '').replace('@s.whatsapp.net', '')}</p>
-      <p><strong>Pedidos totales:</strong> {pedido.clienteResumen.total}</p>
-      <p><strong>Pagados:</strong> {pedido.clienteResumen.pagados}</p>
-      <p><strong>Pendientes:</strong> {pedido.clienteResumen.pendientes}</p>
-      <p><strong>Cancelados:</strong> {pedido.clienteResumen.cancelados}</p>
-    </motion.div>
-  ) : null;
+  return (
+    <section className="min-h-screen bg-black text-white py-20 px-6">
+      <div className="max-w-4xl mx-auto space-y-8">
 
-  return <></>; // La interfaz permanece como ya definida en tu código original
+        <button
+          onClick={() => navigate('/admin/pedidos')}
+          className="text-sm bg-white text-black rounded-full px-4 py-2 hover:bg-white/80 transition font-semibold"
+        >
+          ⬅️ Volver a pedidos
+        </button>
+
+        <div className="bg-white/5 backdrop-blur-lg p-6 rounded-2xl border border-white/10 shadow-glow-md">
+          <h2 className="text-2xl font-bold mb-2">📦 Detalle del Pedido</h2>
+          <p className="text-sm text-white/70 mb-2">ID: <span className="font-mono">{pedido.id}</span></p>
+          <p className="text-white text-lg">💰 Total: <strong>${pedido.total?.toFixed(2)}</strong></p>
+          <p className="text-white/70 text-sm">🕒 Fecha: {new Date(pedido.fecha || '').toLocaleString('es-VE')}</p>
+
+          <div className="mt-4">
+            <label className="block text-white/80 mb-1 text-sm">📋 Estado actual</label>
+            <select
+              className="w-full bg-white/10 rounded-xl px-4 py-2 text-sm text-white"
+              value={nuevoEstado}
+              onChange={(e) => setNuevoEstado(e.target.value)}
+            >
+              {estadosOpciones.map((estado) => (
+                <option key={estado.value} value={estado.value}>
+                  {estado.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="mt-4">
+            <p className="text-white/80 text-sm mb-1">💳 Método de pago: <strong>{pedido.metodoPago || '—'}</strong></p>
+            <p className="text-white/80 text-sm">📎 Referencia: <strong>{ref || '—'}</strong></p>
+            <p className="text-white/80 text-sm">🗓️ Fecha de pago: <strong>{fechaFormateada}</strong></p>
+          </div>
+
+          <button
+            disabled={guardando || nuevoEstado === pedido.estado}
+            onClick={actualizarEstado}
+            className="mt-6 bg-green-500 hover:bg-green-600 disabled:opacity-40 text-white px-6 py-2 rounded-full text-sm font-semibold transition"
+          >
+            {guardando ? 'Guardando...' : 'Actualizar Estado'}
+          </button>
+        </div>
+
+        {pedido.cliente && pedido.clienteResumen && (
+          <motion.div
+            className="bg-white/5 backdrop-blur-md p-6 rounded-2xl border border-white/10 text-white shadow-glow-md"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <h3 className="text-xl font-bold mb-2">👤 Historial del Cliente</h3>
+            <p><strong>Nombre:</strong> {pedido.cliente}</p>
+            <p><strong>Teléfono:</strong> {(pedido.telefono || '').replace('@s.whatsapp.net', '')}</p>
+            <p><strong>Pedidos totales:</strong> {pedido.clienteResumen.total}</p>
+            <p><strong>Pagados:</strong> {pedido.clienteResumen.pagados}</p>
+            <p><strong>Pendientes:</strong> {pedido.clienteResumen.pendientes}</p>
+            <p><strong>Cancelados:</strong> {pedido.clienteResumen.cancelados}</p>
+          </motion.div>
+        )}
+      </div>
+    </section>
+  );
 };
 
 export default AdminPedidoDetalle;

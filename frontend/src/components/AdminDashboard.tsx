@@ -1,72 +1,33 @@
-// ✅ AdminDashboard.tsx completamente actualizado para mostrar visitas y ubicación
+// ✅ FILE: src/components/AdminDashboard.tsx
 
 import React, { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
-import { logout, isAuthenticated } from '../utils/auth'
-
-interface Pedido {
-  id: string
-  titulo: string
-  precio: string
-  idCompra: string
-  fecha: string
-  nombre: string
-  apellido: string
-  correo: string
-  metodo: string
-  comprobante: string
-  confirmado: boolean
-}
-
-interface VisitaGeo {
-  total: number
-  ultimas: Array<{
-    ip: string
-    userAgent: string
-    timestamp: string
-    geo?: {
-      country?: string
-      city?: string
-    }
-  }>
-}
+import { isAuthenticated, logout } from '../utils/auth'
 
 const AdminDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true)
-  const [pedidos, setPedidos] = useState<Pedido[]>([])
-  const [visitas, setVisitas] = useState<VisitaGeo>({ total: 0, ultimas: [] })
+  const [visitas, setVisitas] = useState(0)
+  const [pedidosPendientes, setPedidosPendientes] = useState(0)
   const navigate = useNavigate()
 
-  const cargarPedidos = async () => {
+  const cargarDatos = async () => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/pedidos`, {
+      const resVisitas = await fetch(`${import.meta.env.VITE_API_URL}/api/visitas`, {
         credentials: 'include'
       })
-      if (res.ok) {
-        const data = await res.json()
-        setPedidos(data)
-      } else {
-        console.error('❌ Error al obtener pedidos:', await res.text())
-      }
-    } catch (e) {
-      console.error('❌ Error al cargar pedidos:', e)
-    }
-  }
+      const dataVisitas = await resVisitas.json()
+      setVisitas(dataVisitas.total || 0)
 
-  const cargarVisitas = async () => {
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/visitas`, {
+      const resPedidos = await fetch(`${import.meta.env.VITE_API_URL}/api/pedidos`, {
         credentials: 'include'
       })
-      if (res.ok) {
-        const data = await res.json()
-        setVisitas(data)
-      } else {
-        console.error('❌ Error al obtener visitas:', await res.text())
-      }
-    } catch (e) {
-      console.error('❌ Error al cargar visitas:', e)
+      const dataPedidos = await resPedidos.json()
+      const pendientes = dataPedidos.filter((p: any) => !p.confirmado).length
+      setPedidosPendientes(pendientes)
+    } catch (err) {
+      console.error('❌ Error al cargar datos del dashboard:', err)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -75,38 +36,15 @@ const AdminDashboard: React.FC = () => {
       try {
         const auth = await isAuthenticated()
         if (!auth) throw new Error('Sesión inválida')
-        console.log('✅ Sesión de administrador válida')
-        await cargarPedidos()
-        await cargarVisitas()
+        await cargarDatos()
       } catch {
         await logout()
         navigate('/admin', { replace: true })
-      } finally {
-        setLoading(false)
       }
     }
 
     verificarSesion()
   }, [navigate])
-
-  const confirmarPago = async (id: string) => {
-    try {
-      await fetch(`${import.meta.env.VITE_API_URL}/api/pedidos/${id}/confirmar`, {
-        method: 'PATCH',
-        credentials: 'include'
-      })
-      setPedidos((prev) =>
-        prev.map((p) => (p.id === id ? { ...p, confirmado: true } : p))
-      )
-    } catch (e) {
-      alert('⚠️ Error al confirmar el pago.')
-    }
-  }
-
-  const handleLogout = async () => {
-    await logout()
-    navigate('/admin', { replace: true })
-  }
 
   if (loading) {
     return (
@@ -123,75 +61,50 @@ const AdminDashboard: React.FC = () => {
     >
       <div className="absolute inset-0 bg-black/70 backdrop-blur-xl"></div>
       <div className="relative z-10 py-20 px-6 text-white">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
-            <div>
-              <h1 className="text-4xl font-bold font-sans">Panel de Pedidos – MundoIAanime</h1>
-              <p className="text-white/60 text-sm mt-2 font-sans">
-                👁️ Total de visitas registradas: <span className="font-bold">{visitas.total}</span>
-              </p>
-            </div>
+        <div className="max-w-4xl mx-auto text-center">
+          <h1 className="text-4xl font-bold font-sans mb-10">Panel de Administración – MundoIAanime</h1>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <button
-              onClick={handleLogout}
-              className="text-sm bg-white text-black rounded-full px-5 py-2 hover:bg-red-500 hover:text-white transition font-semibold"
+              onClick={() => navigate('/admin/visitas')}
+              className="bg-white/10 hover:bg-white/20 transition text-white rounded-2xl py-10 px-6 shadow-lg"
             >
-              Cerrar sesión
+              👁️ <br />
+              <span className="text-2xl font-bold">{visitas}</span> <br />
+              Visitas
+            </button>
+
+            <button
+              onClick={() => navigate('/admin/pedidos')}
+              className="relative bg-white/10 hover:bg-white/20 transition text-white rounded-2xl py-10 px-6 shadow-lg"
+            >
+              📦 <br />
+              Pedidos
+              {pedidosPendientes > 0 && (
+                <span className="absolute top-2 right-4 text-xs bg-red-600 rounded-full px-2 py-1 font-bold">
+                  {pedidosPendientes}
+                </span>
+              )}
+            </button>
+
+            <button
+              onClick={() => navigate('/admin/productos')}
+              className="bg-white/10 hover:bg-white/20 transition text-white rounded-2xl py-10 px-6 shadow-lg"
+            >
+              📚 <br />
+              Catálogo
             </button>
           </div>
 
-          {visitas.ultimas.length > 0 && (
-            <div className="bg-white/10 p-4 rounded-xl text-sm mb-10">
-              <h2 className="font-semibold mb-2">📍 Últimas visitas</h2>
-              <ul className="list-disc list-inside space-y-1">
-                {visitas.ultimas.map((v, i) => (
-                  <li key={i}>
-                    {v.timestamp.slice(0, 10)} – {v.ip} – {v.geo?.city || 'Ciudad desconocida'}, {v.geo?.country || 'País desconocido'}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {pedidos.length === 0 ? (
-            <p className="text-white/70 text-center mt-10 font-sans">
-              No hay pedidos registrados por el momento.
-            </p>
-          ) : (
-            <motion.div
-              className="grid gap-6"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.8 }}
-            >
-              {pedidos.map((pedido) => (
-                <div
-                  key={pedido.id}
-                  className="p-6 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 shadow-glow-md"
-                >
-                  <p className="text-lg font-semibold">{pedido.titulo}</p>
-                  <p className="text-white/70 text-sm">💵 Precio: {pedido.precio}</p>
-                  <p className="text-white/70 text-sm">🆔 ID Compra: {pedido.idCompra}</p>
-                  <p className="text-white/70 text-sm">📅 Fecha: {pedido.fecha}</p>
-                  <p className="text-white/70 text-sm">👤 Nombre: {pedido.nombre} {pedido.apellido}</p>
-                  <p className="text-white/70 text-sm">✉️ Correo: {pedido.correo}</p>
-                  <p className="text-white/70 text-sm">💳 Método: {pedido.metodo}</p>
-                  <p className="text-white/70 text-sm">📎 Comprobante: {pedido.comprobante}</p>
-
-                  <button
-                    onClick={() => confirmarPago(pedido.id)}
-                    disabled={pedido.confirmado}
-                    className={`mt-4 w-full py-2 rounded-full text-sm font-semibold transition ${
-                      pedido.confirmado
-                        ? 'bg-green-600 text-white cursor-not-allowed'
-                        : 'bg-white text-black hover:bg-gray-200'
-                    }`}
-                  >
-                    {pedido.confirmado ? '✅ Pago Confirmado' : 'Confirmar Pago'}
-                  </button>
-                </div>
-              ))}
-            </motion.div>
-          )}
+          <button
+            onClick={async () => {
+              await logout()
+              navigate('/admin', { replace: true })
+            }}
+            className="mt-12 text-sm bg-white text-black rounded-full px-6 py-2 hover:bg-red-500 hover:text-white transition font-semibold"
+          >
+            Cerrar sesión
+          </button>
         </div>
       </div>
     </section>

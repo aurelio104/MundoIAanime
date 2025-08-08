@@ -1,4 +1,5 @@
 // ✅ FILE: src/App.tsx
+
 import React, { Suspense, lazy } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
@@ -25,11 +26,12 @@ import LoadingSpinner from './components/LoadingSpinner'
 // 🧪 Página de prueba (tasa BCV u otras)
 import TestTasa from './pages/TestTasa'
 
-// 📦 Admin (lazy load)
+// 📦 Admin (lazy load para rendimiento)
 const AdminDashboard = lazy(() => import('./components/AdminDashboard'))
 const DashboardProductos = lazy(() => import('./components/DashboardProductos'))
 const AdminPedidos = lazy(() => import('./components/AdminPedidos'))
 const AdminPedidoDetalle = lazy(() => import('./components/AdminPedidoDetalle'))
+const AdminVisitas = lazy(() => import('./components/AdminVisitas')) // ✅ NUEVO
 
 const App: React.FC = () => {
   return (
@@ -103,6 +105,17 @@ const App: React.FC = () => {
                 <Suspense fallback={<LoadingSpinner message="Cargando detalle del pedido..." />}>
                   <PrivateRoute>
                     <AdminPedidoDetalle />
+                  </PrivateRoute>
+                </Suspense>
+              }
+            />
+
+            <Route
+              path="/admin/visitas"
+              element={
+                <Suspense fallback={<LoadingSpinner message="Cargando visitas..." />}>
+                  <PrivateRoute>
+                    <AdminVisitas />
                   </PrivateRoute>
                 </Suspense>
               }

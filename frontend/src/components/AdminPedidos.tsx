@@ -1,5 +1,3 @@
-// AdminPedidos.tsx — convertido completamente a TypeScript
-
 import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -44,11 +42,9 @@ const AdminPedidos: React.FC = () => {
       const auth = await isAuthenticated();
       if (!auth) throw new Error('Sesión inválida');
 
-      const url = `${import.meta.env.VITE_API_URL}/api/admin/pedidos`;
-      const res = await fetch(url, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/pedidos`, {
         method: 'GET',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include'
       });
 
       if (!res.ok) throw new Error(`Servidor respondió con error ${res.status}`);
@@ -90,11 +86,11 @@ const AdminPedidos: React.FC = () => {
 
   const claseEstado = (estado?: string) => {
     const e = (estado || '').toLowerCase();
-    if (e.includes('cancelado')) return 'text-red-600';
-    if (e.includes('entregado') || e.includes('recibido')) return 'text-green-600';
-    if (e.includes('verificado') || e.includes('fabrica') || e.includes('empaquetado')) return 'text-yellow-600';
-    if (e.includes('enviado') || e.includes('camino')) return 'text-blue-600';
-    return 'text-gray-700';
+    if (e.includes('cancelado')) return 'text-red-500';
+    if (e.includes('entregado') || e.includes('recibido')) return 'text-green-500';
+    if (e.includes('verificado') || e.includes('fabrica') || e.includes('empaquetado')) return 'text-yellow-400';
+    if (e.includes('enviado') || e.includes('camino')) return 'text-blue-400';
+    return 'text-white/60';
   };
 
   const datosFiltrados = pedidos.filter((p) => {
@@ -117,8 +113,6 @@ const AdminPedidos: React.FC = () => {
     navigate(`/admin/pedidos/${id}`);
   };
 
-  const generarKeyUnica = (p: Pedido) => `${p.id}-${p.telefono || 'no-tel'}-${p.fecha || Date.now()}`;
-
   const totalPedidos = pedidos.length;
   const totalCancelados = pedidos.filter(p => p.estado?.toLowerCase().includes('cancelado')).length;
   const totalEnProceso = pedidos.filter(p =>
@@ -129,17 +123,64 @@ const AdminPedidos: React.FC = () => {
   const crearWidget = (label: string, valor: string | number, color: string, estadoTarget: string | null) => (
     <motion.div
       onClick={() => setEstadoFiltrado(estadoTarget)}
-      className={`cursor-pointer backdrop-blur-sm bg-white/30 hover:bg-white/40 rounded-xl p-4 border-l-4 ${color} text-left shadow transition-transform hover:scale-105 font-sans`}
+      className={`cursor-pointer backdrop-blur-sm bg-white/10 hover:bg-white/20 rounded-xl p-4 border-l-4 ${color} text-left shadow transition-transform hover:scale-105 font-sans`}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8 }}
+      transition={{ duration: 0.6 }}
     >
       <h3 className="text-sm text-white/70 font-medium">{label}</h3>
       <p className="text-2xl font-bold text-white">{valor}</p>
     </motion.div>
   );
 
-  return <></>; // Conserva tu JSX original
+  return (
+    <section className="min-h-screen bg-black text-white py-20 px-6">
+      <div className="max-w-6xl mx-auto space-y-10">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <h1 className="text-3xl font-bold">📦 Pedidos registrados</h1>
+          <input
+            type="text"
+            placeholder="Buscar por nombre, ID, referencia..."
+            className="px-4 py-2 rounded-xl bg-white/10 placeholder-white/50 text-sm w-full md:w-96"
+            value={filtro}
+            onChange={(e) => setFiltro(e.target.value)}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {crearWidget('Total de pedidos', totalPedidos, 'border-white', null)}
+          {crearWidget('En proceso', totalEnProceso, 'border-yellow-400', 'pendiente')}
+          {crearWidget('Cancelados', totalCancelados, 'border-red-500', 'cancelado')}
+        </div>
+
+        <motion.div
+          className="grid gap-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6 }}
+        >
+          {datosFiltrados.map((p) => (
+            <div
+              key={p.id}
+              onClick={() => handlePedidoClick(p.id)}
+              className="cursor-pointer p-6 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 backdrop-blur-lg shadow-glow-md transition"
+            >
+              <div className="flex justify-between items-center">
+                <p className="text-sm font-medium text-white/70">{new Date(p.fecha || '').toLocaleString('es-VE')}</p>
+                <p className={`text-sm font-bold uppercase ${claseEstado(p.estado)}`}>
+                  {p.estado || 'Pendiente'}
+                </p>
+              </div>
+              <p className="text-lg font-semibold">{p.cliente || 'Cliente anónimo'}</p>
+              <p className="text-white/70 text-sm">📱 {p.telefono || '—'}</p>
+              <p className="text-white/80 text-sm mt-1">💵 Monto: <strong>${p.total}</strong></p>
+              <p className="text-white/60 text-sm">📎 {resumenPago(p.datosPago)}</p>
+            </div>
+          ))}
+        </motion.div>
+      </div>
+    </section>
+  );
 };
 
 export default AdminPedidos;
