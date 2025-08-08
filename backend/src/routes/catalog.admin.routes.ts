@@ -1,6 +1,6 @@
 // ✅ FILE: src/routes/catalog.admin.routes.ts
 
-import express, { Router } from 'express'
+import { Router, type Request, type Response } from 'express'
 import {
   obtenerColecciones,
   obtenerColeccion,
@@ -11,23 +11,24 @@ import {
   editarProducto,
   eliminarProducto
 } from '../controllers/catalog.controller.js'
+
 import { authMiddleware } from '../middleware/verifyToken.js'
 
-const router: Router = express.Router()
+const router: Router = Router()
 
-// 🔐 Middleware global para proteger todas las rutas del módulo
+// 🔐 Middleware global: protege todas las rutas del catálogo
 router.use(authMiddleware)
 
-// 📦 Rutas de Colecciones
-router.get('/admin/colecciones', obtenerColecciones)
-router.get('/admin/colecciones/:id', obtenerColeccion)
-router.post('/admin/colecciones', crearColeccion)
-router.put('/admin/colecciones/:id', editarColeccion)
-router.delete('/admin/colecciones/:id', eliminarColeccion)
+// 📦 RUTAS DE COLECCIONES (CRUD)
+router.get('/admin/colecciones', obtenerColecciones)                  // GET todas
+router.get('/admin/colecciones/:id', obtenerColeccion)               // GET una
+router.post('/admin/colecciones', crearColeccion)                    // CREATE
+router.put('/admin/colecciones/:id', editarColeccion)                // UPDATE
+router.delete('/admin/colecciones/:id', eliminarColeccion)           // DELETE
 
-// 🛍️ Rutas de Productos dentro de colecciones
-router.post('/admin/colecciones/:id/productos', agregarProducto)
-router.put('/admin/colecciones/:id/productos/:pid', editarProducto)
-router.delete('/admin/colecciones/:id/productos/:pid', eliminarProducto)
+// 🛍️ RUTAS DE PRODUCTOS DENTRO DE COLECCIONES (CRUD anidado)
+router.post('/admin/colecciones/:id/productos', agregarProducto)                       // CREATE producto
+router.put('/admin/colecciones/:id/productos/:pid', editarProducto)                    // UPDATE producto
+router.delete('/admin/colecciones/:id/productos/:pid', eliminarProducto)               // DELETE producto
 
 export default router

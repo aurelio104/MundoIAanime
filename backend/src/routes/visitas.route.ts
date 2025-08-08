@@ -1,25 +1,22 @@
 // ✅ FILE: src/routes/visitas.route.ts
 
-import {
-  Router,
-  type Request,
-  type Response
-} from 'express'
+import { Router, type Request, type Response } from 'express'
 import Visit from '../models/Visit.model.js'
 
 const router = Router()
 
-// 🟢 Endpoint POST /api/visitas (correctamente montado desde main.ts con app.use('/api', visitasRoute))
+// ✅ POST /api/visitas – Registrar nueva visita
 router.post('/visitas', async (req: Request, res: Response): Promise<Response> => {
   try {
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress
-    const userAgent = req.headers['user-agent']
+    // 🛡️ Obtener IP desde encabezados (soporte para proxies)
+    const rawIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress
+    const ip = Array.isArray(rawIp) ? rawIp[0] : rawIp
 
-    const visita = new Visit({
-      ip: Array.isArray(ip) ? ip[0] : ip,
-      userAgent
-    })
+    // 🧠 Obtener user-agent del navegador
+    const userAgent = req.headers['user-agent'] || 'Desconocido'
 
+    // 💾 Crear y guardar la visita
+    const visita = new Visit({ ip, userAgent })
     await visita.save()
 
     return res.status(201).json({ success: true })
