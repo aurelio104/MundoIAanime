@@ -31,12 +31,12 @@ if (!process.env.JWT_SECRET) throw new Error('❌ Falta definir JWT_SECRET en el
 // ✅ Configuración base
 const PORT = Number(process.env.PORT) || 8000
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/MundoIAanime'
-const SELF_URL = process.env.SELF_URL || 'https://appropriate-wilmette-aurelio104-e8ed3ae9.koyeb.app'
+const SELF_URL = process.env.SELF_URL || 'https://api.mundoiaanime.com'
 const isProduction = process.env.NODE_ENV === 'production'
 const AUTH_FOLDER = path.resolve(process.env.AUTH_FOLDER || './auth-bot1')
 
 // 🛑 Captura de errores globales
-process.on('unhandledRejection', (reason, promise) => {
+process.on('unhandledRejection', (reason) => {
   console.error('❌ PROMESA NO MANEJADA:', reason)
 })
 
@@ -56,16 +56,18 @@ async function startServer() {
     const app: Application = express()
     app.set('trust proxy', 1)
 
-    // 🛡️ Seguridad y CORS (con origen explícito)
+    // 🛡️ Seguridad y CORS
     app.use(helmet({ contentSecurityPolicy: false }))
     app.use(cors({
-      origin: 'https://mundo-i-aanime-hxbt.vercel.app', // ⚠️ DOMINIO FIJO
+      origin: isProduction
+        ? 'https://admin.mundoiaanime.com'
+        : 'http://localhost:5173',
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
     }))
 
     app.use(rateLimit({
-      windowMs: 15 * 60 * 1000,
+      windowMs: 15 * 60 * 1000, // 15 min
       max: 100,
       message: { error: '⚠️ Demasiadas solicitudes, intenta más tarde.' }
     }))
@@ -73,13 +75,13 @@ async function startServer() {
     app.use(express.json({ limit: '10kb' }))
     app.use(cookieParser())
 
-    // Crear carpeta auth si no existe
+    // 📁 Crear carpeta auth si no existe
     if (!fs.existsSync(AUTH_FOLDER)) {
       fs.mkdirSync(AUTH_FOLDER, { recursive: true })
       console.log(`📁 Carpeta auth creada en: ${AUTH_FOLDER}`)
     }
 
-    // Endpoint de prueba
+    // 🌐 Endpoint base
     app.get('/', (_req, res) => {
       res.send('✅ Servidor y bot funcionando correctamente')
     })
@@ -90,14 +92,15 @@ async function startServer() {
     app.use('/api', tasaRoute)
     app.use(visitasRoute)
 
-    // 🔐 Rutas privadas
+    // 🔐 Rutas privadas (requieren JWT)
     app.use('/api/catalog', authMiddleware, catalogAdminRoutes)
     app.use('/api/admin', authMiddleware, adminPedidosRoute)
 
-    // 🧹 Eliminar usuario
+    // 🧹 Eliminar usuario manualmente (admin only)
     app.post('/api/deleteUser', authMiddleware, async (req: Request, res: Response) => {
       const { email } = req.body
       if (!email) return res.status(400).json({ error: 'Falta correo del usuario' })
+
       try {
         const result = await User.deleteOne({ correo: email.toLowerCase() })
         if (result.deletedCount === 0) {
@@ -110,19 +113,19 @@ async function startServer() {
       }
     })
 
-    // ♻️ Keep-alive (importante en Koyeb)
+    // ♻️ Keep-alive ping (Koyeb)
     setInterval(() => {
       axios.get(`${SELF_URL}/`)
         .then(() => console.log('📡 Ping keep-alive'))
         .catch((err) => console.error('⚠️ Ping fallido:', err.message))
-    }, 12 * 60 * 1000)
+    }, 12 * 60 * 1000) // Cada 12 minutos
 
-    // 🚀 Arrancar servidor HTTP
+    // 🚀 Iniciar servidor
     app.listen(PORT, () => {
       console.log(`🚀 Servidor escuchando en el puerto ${PORT}`)
     })
 
-    // 🤖 Bot de WhatsApp
+    // 🤖 Iniciar bot de WhatsApp
     await startBot(AUTH_FOLDER)
     console.log('✅ Bot iniciado correctamente')
 

@@ -95,8 +95,8 @@ const AdminLoginForm: React.FC = () => {
         variants={{ visible: { transition: { staggerChildren: 0.25 } } }}
       >
         <motion.img
-          src="/Logo.png"
-          alt="Logo"
+          src="/logo.png"
+          alt="Logo MundoIAanime"
           className="w-24 h-24 object-contain pointer-events-none select-none"
           initial={{ scale: 0 }}
           animate={{ scale: 2, y: -20 }}

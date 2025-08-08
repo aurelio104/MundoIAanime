@@ -29,13 +29,15 @@ export const loginController = async (req: Request, res: Response) => {
     )
 
     // 🍪 Set cookie según entorno
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? 'none' : 'lax',
-      path: '/',
-      maxAge: 60 * 60 * 1000, // 1 hora
-    })
+// login.controller.ts (ejemplo de Express)
+res.cookie('token', token, {
+  httpOnly: true,
+  secure: true,
+  sameSite: 'none', // IMPORTANTE para cross-site cookies
+  domain: '.mundoiaanime.com', // <-- esto habilita subdominios
+  maxAge: 1000 * 60 * 60 * 24 * 7, // 7 días
+});
+
 
     console.log(`✅ Login exitoso para ${user.correo}`)
 
