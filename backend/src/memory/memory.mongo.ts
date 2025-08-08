@@ -1,6 +1,7 @@
 // ✅ src/memory/memory.mongo.ts — memoria del usuario para flujo de cursos y pagos
 
-import { UserMemoryModel, UserMemoryDoc } from '../database/models/UserMemory.js'
+import { UserMemoryModel, type UserMemoryDoc } from '../database/models/UserMemory.js'
+import { PedidoModel, type PedidoDoc } from '../database/models/Pedido.js' // ✅ Asegúrate de tener este modelo
 import type { UserMemory } from '../schemas/UserMemory.js'
 
 /** ✅ Obtener la memoria del usuario por número de teléfono */
@@ -83,4 +84,9 @@ export async function obtenerUsuariosConPagoPendiente(): Promise<UserMemoryDoc[]
 /** ✅ Obtener todos los usuarios con pago verificado */
 export async function obtenerUsuariosConPagoVerificado(): Promise<UserMemoryDoc[]> {
   return await UserMemoryModel.find({ estadoPago: 'verificado' }).sort({ updatedAt: -1 }).lean()
+}
+
+/** ✅ Obtener todos los pedidos registrados (para AdminPedidos.tsx) */
+export async function obtenerTodosLosPedidos(): Promise<PedidoDoc[]> {
+  return await PedidoModel.find({}).sort({ createdAt: -1 }).lean().exec()
 }

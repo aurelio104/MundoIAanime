@@ -87,9 +87,9 @@ const AdminPedidos: React.FC = () => {
   const claseEstado = (estado?: string) => {
     const e = (estado || '').toLowerCase();
     if (e.includes('cancelado')) return 'text-red-500';
-    if (e.includes('entregado') || e.includes('recibido')) return 'text-green-500';
-    if (e.includes('verificado') || e.includes('fabrica') || e.includes('empaquetado')) return 'text-yellow-400';
-    if (e.includes('enviado') || e.includes('camino')) return 'text-blue-400';
+    if (e.includes('entregado') || e.includes('recibido')) return 'text-green-400';
+    if (e.includes('verificado') || e.includes('fabrica') || e.includes('empaquetado')) return 'text-yellow-300';
+    if (e.includes('enviado') || e.includes('camino')) return 'text-blue-300';
     return 'text-white/60';
   };
 
@@ -118,12 +118,11 @@ const AdminPedidos: React.FC = () => {
   const totalEnProceso = pedidos.filter(p =>
     ['pendiente', 'pago_verificado', 'en_fabrica', 'empaquetado', 'enviado'].includes((p.estado || '').toLowerCase())
   ).length;
-  const montoTotal = pedidos.reduce((acc, p) => acc + (parseFloat(p.total || '0') || 0), 0);
 
   const crearWidget = (label: string, valor: string | number, color: string, estadoTarget: string | null) => (
     <motion.div
       onClick={() => setEstadoFiltrado(estadoTarget)}
-      className={`cursor-pointer backdrop-blur-sm bg-white/10 hover:bg-white/20 rounded-xl p-4 border-l-4 ${color} text-left shadow transition-transform hover:scale-105 font-sans`}
+      className={`cursor-pointer bg-white/5 hover:bg-white/10 backdrop-blur-md rounded-xl p-4 border-l-4 ${color} shadow-glow-md transition-transform hover:scale-105 font-sans`}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
@@ -136,23 +135,26 @@ const AdminPedidos: React.FC = () => {
   return (
     <section className="min-h-screen bg-black text-white py-20 px-6">
       <div className="max-w-6xl mx-auto space-y-10">
+        {/* Encabezado y filtro */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <h1 className="text-3xl font-bold">📦 Pedidos registrados</h1>
+          <h1 className="text-3xl font-heading font-bold">📦 Pedidos registrados</h1>
           <input
             type="text"
             placeholder="Buscar por nombre, ID, referencia..."
-            className="px-4 py-2 rounded-xl bg-white/10 placeholder-white/50 text-sm w-full md:w-96"
+            className="px-4 py-2 rounded-xl bg-white/10 placeholder-white/50 text-sm w-full md:w-96 backdrop-blur-md"
             value={filtro}
             onChange={(e) => setFiltro(e.target.value)}
           />
         </div>
 
+        {/* Estadísticas widgets */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {crearWidget('Total de pedidos', totalPedidos, 'border-white', null)}
           {crearWidget('En proceso', totalEnProceso, 'border-yellow-400', 'pendiente')}
           {crearWidget('Cancelados', totalCancelados, 'border-red-500', 'cancelado')}
         </div>
 
+        {/* Lista de pedidos */}
         <motion.div
           className="grid gap-6"
           initial={{ opacity: 0 }}
@@ -166,14 +168,18 @@ const AdminPedidos: React.FC = () => {
               className="cursor-pointer p-6 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 backdrop-blur-lg shadow-glow-md transition"
             >
               <div className="flex justify-between items-center">
-                <p className="text-sm font-medium text-white/70">{new Date(p.fecha || '').toLocaleString('es-VE')}</p>
+                <p className="text-sm font-medium text-white/70">
+                  {new Date(p.fecha || '').toLocaleString('es-VE')}
+                </p>
                 <p className={`text-sm font-bold uppercase ${claseEstado(p.estado)}`}>
                   {p.estado || 'Pendiente'}
                 </p>
               </div>
               <p className="text-lg font-semibold">{p.cliente || 'Cliente anónimo'}</p>
               <p className="text-white/70 text-sm">📱 {p.telefono || '—'}</p>
-              <p className="text-white/80 text-sm mt-1">💵 Monto: <strong>${p.total}</strong></p>
+              <p className="text-white/80 text-sm mt-1">
+                💵 Monto: <strong>${p.total}</strong>
+              </p>
               <p className="text-white/60 text-sm">📎 {resumenPago(p.datosPago)}</p>
             </div>
           ))}

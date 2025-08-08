@@ -44,11 +44,14 @@ process.on('uncaughtException', (err) => {
 
 async function startServer() {
   try {
-    await mongoose.connect(MONGO_URI, { ssl: isProduction })
+    await mongoose.connect(MONGO_URI, {
+      ssl: isProduction,
+      serverSelectionTimeoutMS: 10000
+    })
     console.log('✅ Conectado a MongoDB')
 
     const app: Application = express()
-    app.set('trust proxy', 1) // Requerido para cookies en producción (Koyeb)
+    app.set('trust proxy', 1) // Requerido para cookies SameSite=None en producción
 
     // Orígenes permitidos
     const allowedOrigins = isProduction
@@ -70,9 +73,9 @@ async function startServer() {
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
     }))
 
-    // Middlewares base
+    // Middleware generales
     app.use(rateLimit({
-      windowMs: 15 * 60 * 1000,
+      windowMs: 15 * 60 * 1000, // 15 minutos
       max: 100,
       message: { error: '⚠️ Demasiadas solicitudes, intenta más tarde.' }
     }))
@@ -85,22 +88,22 @@ async function startServer() {
       console.log(`📁 Carpeta auth creada en: ${AUTH_FOLDER}`)
     }
 
-    // Endpoint raíz
+    // Ruta raíz para testing rápido
     app.get('/', (_req, res) => {
       res.send('✅ Servidor y bot funcionando correctamente')
     })
 
     // Rutas públicas
     app.use(registerAdminRoute)
-    app.use('/api', authRoutes)
-    app.use('/api', tasaRoute)     // ✅ /api/tasa-bcv
-    app.use('/api', visitasRoute)  // ✅ /api/visitas (POST y GET)
+    app.use('/api', authRoutes)        // /api/login, /api/logout, /api/check-auth
+    app.use('/api', tasaRoute)         // /api/tasa-bcv
+    app.use('/api', visitasRoute)      // /api/visitas
 
-    // Rutas protegidas
+    // Rutas privadas protegidas
     app.use('/api/catalog', authMiddleware, catalogAdminRoutes)
     app.use('/api/admin', authMiddleware, adminPedidosRoute)
 
-    // Ruta para eliminar usuario (admin)
+    // Ruta manual para eliminar usuario (admin)
     app.post('/api/deleteUser', authMiddleware, async (req: Request, res: Response) => {
       const { email } = req.body
       if (!email) return res.status(400).json({ error: 'Falta correo del usuario' })
@@ -117,14 +120,14 @@ async function startServer() {
       }
     })
 
-    // Keep-alive para evitar que Koyeb suspenda la app
+    // Keep-alive para Koyeb (ping cada 12 minutos)
     setInterval(() => {
       axios.get(`${SELF_URL}/`)
         .then(() => console.log('📡 Ping keep-alive'))
         .catch((err) => console.error('⚠️ Ping fallido:', err.message))
     }, 12 * 60 * 1000)
 
-    // Iniciar servidor HTTP
+    // Iniciar servidor
     app.listen(PORT, () => {
       console.log(`🚀 Servidor escuchando en el puerto ${PORT}`)
     })
