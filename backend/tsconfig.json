@@ -14,28 +14,24 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "outDir": "./dist",
-    "rootDir": "./",
-    "baseUrl": "./",
+    "rootDir": "src", // ✅ corregido
+    "baseUrl": "./src", // ✅ baseUrl cambia a src
     "paths": {
-      "@intelligence/*": ["src/intelligence/*"],
-      "@memory/*": ["src/memory/*"],
-      "@flows/*": ["src/flows/*"],
-      "@services/*": ["src/services/*"],
-      "@utils/*": ["src/utils/*"],
-      "@schemas/*": ["src/schemas/*"],
-      "@models/*": ["src/database/models/*"],
-      "@types/*": ["src/types/*"],
-      "@data/*": ["src/data/*"],
-      "@handlers/*": ["src/handlers/*"],
-      "@ocr/*": ["src/ocr/*"],
-      "@/*": ["src/*"]
+      "@intelligence/*": ["intelligence/*"],
+      "@memory/*": ["memory/*"],
+      "@flows/*": ["flows/*"],
+      "@services/*": ["services/*"],
+      "@utils/*": ["utils/*"],
+      "@schemas/*": ["schemas/*"],
+      "@models/*": ["database/models/*"],
+      "@types/*": ["types/*"],
+      "@data/*": ["data/*"],
+      "@handlers/*": ["handlers/*"],
+      "@ocr/*": ["ocr/*"],
+      "@/*": ["*"]
     },
-    "types": ["node"] // 🧠 Asegura que tengas tipado de Node.js
+    "types": ["node"]
   },
-  "include": [
-    "src/**/*",
-    "main.ts",
-    "src/types/**/*"  // 🛠️ Incluye bien tus archivos de tipado personalizados
-  ],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
 }
