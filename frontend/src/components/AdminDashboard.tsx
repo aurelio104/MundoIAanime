@@ -103,10 +103,11 @@ const AdminDashboard: React.FC = () => {
   }
 
   return (
-    <section
-      className="min-h-screen bg-cover bg-center bg-no-repeat relative"
-      style={{ backgroundImage: `url(${heroBg})` }}
-    >
+<section
+  className="min-h-screen bg-cover bg-center bg-no-repeat relative"
+  style={{ backgroundImage: "url('/hero.png')" }}
+>
+
       <div className="absolute inset-0 bg-black/70 backdrop-blur-xl"></div>
       <div className="relative z-10 py-20 px-6 text-white">
         <div className="max-w-7xl mx-auto">
