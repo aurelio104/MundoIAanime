@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { API_URL } from '../utils/auth';
+import { API_URL } from '../utils/auth'; // Asegúrate de que la ruta sea correcta
 
 const HeroLanding: React.FC = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -18,20 +18,23 @@ const HeroLanding: React.FC = () => {
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
 
-  // ✅ Registrar visita al backend
+  // ✅ Registrar visita correctamente al backend
   useEffect(() => {
-    fetch(`${API_URL}/api/visitas`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include'
-    }).catch((error) =>
-      console.error('❌ Error registrando visita:', error)
-    );
+    const registrarVisita = async () => {
+      try {
+        await fetch(`${API_URL}/api/visitas`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include'
+        });
+      } catch (error) {
+        console.error('❌ Error registrando visita:', error);
+      }
+    };
+    registrarVisita();
   }, []);
 
-  // ✅ Animación de scroll automático (decorativa)
+  // ✅ Scroll decorativo al inicio
   useEffect(() => {
     const timeout = setTimeout(() => {
       const start = window.scrollY;
@@ -60,19 +63,23 @@ const HeroLanding: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // ✅ Cargar script de TikTok dinámicamente cuando modal aparece
-  useEffect(() => {
-    if (!showModal) return;
+  // ✅ Cargar script TikTok dinámicamente
+useEffect(() => {
+  let script: HTMLScriptElement | null = null;
 
-    const script = document.createElement('script');
+  if (showModal) {
+    script = document.createElement('script');
     script.src = 'https://www.tiktok.com/embed.js';
     script.async = true;
     document.body.appendChild(script);
+  }
 
-    return () => {
+  return () => {
+    if (script) {
       document.body.removeChild(script);
-    };
-  }, [showModal]);
+    }
+  };
+}, [showModal]);
 
   // ✅ Ejecutar instalación PWA
   const handleInstall = () => {
@@ -104,7 +111,7 @@ const HeroLanding: React.FC = () => {
         zIndex: 1
       }}
     >
-      {/* Modal TikTok */}
+      {/* ✅ MODAL TIKTOK */}
       {showModal && (
         <motion.div
           className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center px-4"
@@ -150,14 +157,13 @@ const HeroLanding: React.FC = () => {
         </motion.div>
       )}
 
-      {/* Capas de fondo */}
+      {/* ✅ CAPAS DE FONDO */}
       <motion.div
         className="absolute inset-0 bg-black z-0"
         initial={{ opacity: 1 }}
         animate={{ opacity: 0.6 }}
         transition={{ duration: 1.4, ease: 'easeInOut' }}
       />
-
       <motion.div
         className="absolute inset-0 z-10 backdrop-blur-xl bg-white bg-opacity-5"
         initial={{ opacity: 0 }}
@@ -165,7 +171,7 @@ const HeroLanding: React.FC = () => {
         transition={{ duration: 1.8, delay: 0.6, ease: 'easeOut' }}
       />
 
-      {/* Contenido principal */}
+      {/* ✅ CONTENIDO PRINCIPAL */}
       <motion.div
         className="relative z-20 px-6 text-white flex flex-col items-center space-y-10"
         initial="hidden"
@@ -180,7 +186,6 @@ const HeroLanding: React.FC = () => {
           animate={{ scale: 1.5, y: -30 }}
           transition={{ duration: 2, delay: 1, ease: 'easeInOut' }}
         />
-
         <motion.h1
           className="text-2xl md:text-4xl font-bold tracking-wide text-white drop-shadow-lg"
           initial={{ opacity: 0, y: 20 }}
@@ -189,7 +194,6 @@ const HeroLanding: React.FC = () => {
         >
           Aprende a crear contenido anime con Inteligencia Artificial
         </motion.h1>
-
         <motion.div
           className="flex flex-col space-y-4 mt-4 items-center"
           initial={{ opacity: 0, scale: 0.85 }}
@@ -204,7 +208,6 @@ const HeroLanding: React.FC = () => {
           >
             Únete al canal VIP
           </a>
-
           <button
             onClick={scrollToCatalog}
             className="ios-button w-56 text-lg"

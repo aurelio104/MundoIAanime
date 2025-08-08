@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { logout, isAuthenticated } from '../utils/auth'
-import heroBg from '../assets/hero.jpg' // Asegúrate de tener esta imagen
+import heroBg from '../assets/hero.jpg'
 
 interface Pedido {
   id: string
@@ -103,11 +103,10 @@ const AdminDashboard: React.FC = () => {
   }
 
   return (
-<section
-  className="min-h-screen bg-cover bg-center bg-no-repeat relative"
-  style={{ backgroundImage: "url('/hero.png')" }}
->
-
+    <section
+      className="min-h-screen bg-cover bg-center bg-no-repeat relative"
+      style={{ backgroundImage: "url('/hero.png')" }}
+    >
       <div className="absolute inset-0 bg-black/70 backdrop-blur-xl"></div>
       <div className="relative z-10 py-20 px-6 text-white">
         <div className="max-w-7xl mx-auto">

@@ -111,19 +111,10 @@ const CoursesSection = () => {
       `Fecha: ${fecha}\n\n` +
       `Nombre: ${formValues.nombre} ${formValues.apellido}\n` +
       `Correo: ${formValues.correo}\n` +
-
-
       `Gracias por tu compra. Te contactaremos pronto con el acceso al curso.`;
 
     const url = `https://wa.me/584244043150?text=${encodeURIComponent(mensaje)}`;
     window.open(url, '_blank');
-  };
-
-  const infoMetodo: Record<string, string> = {
-    'Zelle': 'Correo Zelle: franceline@example.com',
-    'Pago Móvil': 'Pago Móvil: +58 414-000-0000 / CI: 12345678',
-    'PayPal': 'Enlace PayPal: paypal.me/mundoiaanime',
-    'Binance': 'USDT TRC20: TNJ8xxx....XRP'
   };
 
   return (

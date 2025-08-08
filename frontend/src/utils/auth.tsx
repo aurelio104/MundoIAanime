@@ -1,27 +1,26 @@
 import axios from 'axios';
 
-// 🌍 Detectar entorno
+// 🌍 Detectar si estamos en desarrollo
 const isDev = import.meta.env.DEV;
 
-// 📡 URL del backend dinámico (usando variable de entorno si existe)
-export const API_URL = isDev
-  ? 'http://localhost:5000'
-  : import.meta.env.VITE_API_URL || 'https://api.mundoiaanime.com';
+// 🌐 URL base del backend dinámico
+export const API_URL = import.meta.env.VITE_API_URL || 'https://api.mundoiaanime.com';
 
-// 🍪 Incluir cookies en TODAS las peticiones axios
+// 🍪 Axios enviará cookies en todas las peticiones por defecto
 axios.defaults.withCredentials = true;
 
-// 🔐 Headers comunes para CORS con Origin explícito
+// 🧼 Limpieza de entradas para evitar errores por espacios u otros caracteres
+const sanitize = (input: string): string =>
+  typeof input === 'string' ? input.trim() : '';
+
+// 🔐 Headers comunes con Origin explícito para CORS
 const getDefaultHeaders = () => ({
   'Content-Type': 'application/json',
   'Origin': isDev ? 'http://localhost:5173' : 'https://mundoiaanime.com'
 });
 
-// 🧼 Sanitizar cadenas para prevenir errores por espacios o caracteres invisibles
-const sanitize = (input: string): string =>
-  typeof input === 'string' ? input.trim() : '';
 
-// 🔐 Iniciar sesión con email y contraseña
+// ✅ Iniciar sesión con email y password
 export const login = async (
   email: string,
   password: string
@@ -48,7 +47,8 @@ export const login = async (
   }
 };
 
-// 🛡️ Verificar si hay una sesión activa
+
+// ✅ Verificar si el usuario tiene sesión activa
 export const isAuthenticated = async (): Promise<boolean> => {
   try {
     console.log('🔎 Verificando sesión activa...');
@@ -58,10 +58,9 @@ export const isAuthenticated = async (): Promise<boolean> => {
       timeout: 8000
     });
 
-    const authenticated =
-      res.status === 200 && res.data?.authenticated === true;
+    const authenticated = res.status === 200 && res.data?.authenticated === true;
 
-    console.log('✅ Resultado:', authenticated);
+    console.log('✅ Resultado de sesión:', authenticated);
     return authenticated;
   } catch (err) {
     console.warn('⛔ Sesión no válida o expirada:', err);
@@ -69,7 +68,8 @@ export const isAuthenticated = async (): Promise<boolean> => {
   }
 };
 
-// 🚪 Cerrar sesión
+
+// ✅ Cerrar sesión
 export const logout = async (): Promise<void> => {
   try {
     await axios.post(
@@ -79,7 +79,7 @@ export const logout = async (): Promise<void> => {
         headers: getDefaultHeaders()
       }
     );
-    console.log('👋 Sesión cerrada correctamente');
+    console.log('👋 Logout completado correctamente');
   } catch (err) {
     console.error('❌ Error al cerrar sesión:', err);
   }
