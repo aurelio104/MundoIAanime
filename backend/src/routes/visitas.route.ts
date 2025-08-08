@@ -1,9 +1,15 @@
 // ✅ FILE: src/routes/visitas.route.ts
 
-import { Router, type Request, type Response } from 'express'
+import {
+  Router,
+  type Router as RouterType,
+  type Request,
+  type Response
+} from 'express'
 import Visit from '../models/Visit.model.js'
 
-const router = Router()
+// ✅ Corrección TS2742: tipo explícito para el router
+const router: RouterType = Router()
 
 // ✅ POST /api/visitas – Registrar nueva visita
 router.post('/visitas', async (req: Request, res: Response): Promise<Response> => {

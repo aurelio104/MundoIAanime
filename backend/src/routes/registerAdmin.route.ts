@@ -1,11 +1,17 @@
 // ✅ FILE: src/routes/registerAdmin.route.ts
 
-import { Router, type Request, type Response } from 'express'
+import {
+  Router,
+  type Router as RouterType,
+  type Request,
+  type Response
+} from 'express'
 import bcrypt from 'bcryptjs'
 import User from '../models/User.model.js'
 import { authMiddleware } from '../middleware/verifyToken.js'
 
-const router = Router()
+// ✅ Corrección: anotación explícita del tipo Router
+const router: RouterType = Router()
 
 // 🔐 POST /api/register-admin – Registrar nuevo administrador (requiere token)
 router.post('/api/register-admin', authMiddleware, async (req: Request, res: Response) => {

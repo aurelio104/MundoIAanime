@@ -1,9 +1,15 @@
 // ✅ FILE: src/routes/tasa.route.ts
 
-import { Router, type Request, type Response } from 'express'
+import {
+  Router,
+  type Router as RouterType,
+  type Request,
+  type Response
+} from 'express'
 import axios from 'axios'
 
-const router = Router()
+// ✅ Corrección TS2742: tipo explícito para el router
+const router: RouterType = Router()
 
 // 📈 GET /api/tasa-bcv – Obtener tasa oficial del BCV
 router.get('/tasa-bcv', async (_req: Request, res: Response): Promise<Response> => {

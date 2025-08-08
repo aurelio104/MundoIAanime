@@ -1,6 +1,12 @@
 // ✅ FILE: src/routes/catalog.admin.routes.ts
 
-import { Router, type Request, type Response } from 'express'
+import {
+  Router,
+  type Router as RouterType,
+  type Request,
+  type Response
+} from 'express'
+
 import {
   obtenerColecciones,
   obtenerColeccion,
@@ -14,7 +20,8 @@ import {
 
 import { authMiddleware } from '../middleware/verifyToken.js'
 
-const router: Router = Router()
+// ✅ Anotación explícita para evitar errores TS2742
+const router: RouterType = Router()
 
 // 🔐 Middleware global: protege todas las rutas del catálogo
 router.use(authMiddleware)
@@ -27,8 +34,8 @@ router.put('/admin/colecciones/:id', editarColeccion)                // UPDATE
 router.delete('/admin/colecciones/:id', eliminarColeccion)           // DELETE
 
 // 🛍️ RUTAS DE PRODUCTOS DENTRO DE COLECCIONES (CRUD anidado)
-router.post('/admin/colecciones/:id/productos', agregarProducto)                       // CREATE producto
-router.put('/admin/colecciones/:id/productos/:pid', editarProducto)                    // UPDATE producto
-router.delete('/admin/colecciones/:id/productos/:pid', eliminarProducto)               // DELETE producto
+router.post('/admin/colecciones/:id/productos', agregarProducto)                    // CREATE producto
+router.put('/admin/colecciones/:id/productos/:pid', editarProducto)                 // UPDATE producto
+router.delete('/admin/colecciones/:id/productos/:pid', eliminarProducto)           // DELETE producto
 
 export default router

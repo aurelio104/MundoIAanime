@@ -1,12 +1,17 @@
 // ✅ FILE: src/routes/admin.routes.ts
 
-import { Router, type Request, type Response } from 'express'
+import {
+  Router,
+  type Router as RouterType,
+  type Request,
+  type Response
+} from 'express'
 import {
   obtenerUsuariosConPagoPendiente,
   obtenerUsuariosConPagoVerificado
 } from '../memory/memory.mongo.js'
 
-const router = Router()
+const router: RouterType = Router()
 
 // 📦 GET /api/admin/pendientes – Usuarios con pago pendiente
 router.get('/pendientes', async (_req: Request, res: Response): Promise<Response> => {
