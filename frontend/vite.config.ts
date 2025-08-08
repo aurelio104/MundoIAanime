@@ -5,16 +5,18 @@ import { VitePWA } from 'vite-plugin-pwa';
 import path from 'node:path';
 import { fileURLToPath } from 'url';
 
-// 👇 Compatibilidad con __dirname en ESM
+// 🔁 Compatibilidad __dirname en ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export default defineConfig({
   base: '/',
+
+  // ✅ Plugins
   plugins: [
     react(),
-    
-    // Configuración PWA
+
+    // ✅ Progressive Web App (PWA)
     VitePWA({
       strategies: 'injectManifest',
       injectManifest: {
@@ -76,28 +78,37 @@ export default defineConfig({
     })
   ],
 
+  // ✅ Resolución de alias
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, 'src'),
+    }
+  },
+
+  // ✅ Configuración de build
   build: {
     outDir: 'dist',
     emptyOutDir: true,
   },
 
+  // ✅ Dev server (solo afecta desarrollo local)
   server: {
     hmr: {
-      protocol: 'ws', // WebSocket
-      host: 'localhost', // Dirección para WebSocket
-      port: 5173, // Puerto donde está corriendo tu Vite en desarrollo
+      protocol: 'ws',
+      host: 'localhost',
+      port: 5173,
     },
     proxy: {
-      // Usamos un proxy para el backend
       '/api': {
-        target: 'http://localhost:5000', // Cambia esto si tu backend está en otro puerto
+        target: 'http://localhost:5000',
         changeOrigin: true,
         secure: false,
       }
     }
   },
 
+  // ✅ Optimización de dependencias
   optimizeDeps: {
     include: ['jwt-decode']
-  },
+  }
 });
