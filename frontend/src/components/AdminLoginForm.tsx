@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Eye, EyeOff } from 'lucide-react'
-import { login, isAuthenticated } from '@/utils/auth'
+import { login, isAuthenticated } from '../utils/auth'
 import LoadingSpinner from './LoadingSpinner'
 
 const AdminLoginForm: React.FC = () => {

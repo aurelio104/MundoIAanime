@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { API_URL } from '@/utils/auth';
+import { API_URL } from '../utils/auth';
 
 const HeroLanding: React.FC = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);

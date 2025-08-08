@@ -12,13 +12,7 @@
     "skipLibCheck": true,
     "jsx": "react-jsx",
     "allowJs": false,
-    "types": ["vite/client"],
-
-    // ✅ Agregado para alias "@"
-    "baseUrl": "./src",
-    "paths": {
-      "@/*": ["./*"]
-    }
+    "types": ["vite/client"]
   },
   "include": ["src", "vite-env.d.ts", "src/**/*.ts", "src/**/*.tsx"],
   "exclude": ["dist", "node_modules"]
