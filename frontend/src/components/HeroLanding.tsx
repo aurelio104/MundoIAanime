@@ -1,5 +1,3 @@
-// ✅ FILE: HeroLanding.tsx
-
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { API_URL } from '../utils/auth';
@@ -24,31 +22,37 @@ const HeroLanding: React.FC = () => {
   useEffect(() => {
     fetch(`${API_URL}/api/visitas`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include', // Importante para cookies HttpOnly
-    }).catch((error) => console.error('❌ Error registrando visita:', error));
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include'
+    }).catch((error) =>
+      console.error('❌ Error registrando visita:', error)
+    );
   }, []);
 
-  // ✅ Animación de scroll automático
+  // ✅ Animación de scroll automático (decorativa)
   useEffect(() => {
-    setTimeout(() => {
+    const timeout = setTimeout(() => {
       const start = window.scrollY;
       const end = 100;
       const duration = 1000;
       const startTime = performance.now();
 
       const animateScroll = (currentTime: number) => {
-        const elapsedTime = currentTime - startTime;
-        const progress = Math.min(elapsedTime / duration, 1);
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
         window.scrollTo(0, start + (end - start) * progress);
         if (progress < 1) requestAnimationFrame(animateScroll);
       };
 
       requestAnimationFrame(animateScroll);
     }, 3500);
+
+    return () => clearTimeout(timeout);
   }, []);
 
-  // ✅ Mostrar modal TikTok
+  // ✅ Mostrar modal TikTok tras 3s
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowModal(true);
@@ -56,19 +60,19 @@ const HeroLanding: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // ✅ Insertar script de TikTok al abrir modal
-useEffect(() => {
-  if (!showModal) return;
+  // ✅ Cargar script de TikTok dinámicamente cuando modal aparece
+  useEffect(() => {
+    if (!showModal) return;
 
-  const script = document.createElement('script');
-  script.src = 'https://www.tiktok.com/embed.js';
-  script.async = true;
-  document.body.appendChild(script);
+    const script = document.createElement('script');
+    script.src = 'https://www.tiktok.com/embed.js';
+    script.async = true;
+    document.body.appendChild(script);
 
-  return () => {
-    document.body.removeChild(script);
-  };
-}, [showModal]);
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, [showModal]);
 
   // ✅ Ejecutar instalación PWA
   const handleInstall = () => {
@@ -80,7 +84,7 @@ useEffect(() => {
     }
   };
 
-  // ✅ Scroll a catálogo
+  // ✅ Scroll a sección de catálogo
   const scrollToCatalog = () => {
     const section = document.querySelector('#tulio-catalogo');
     if (section) {
@@ -97,9 +101,10 @@ useEffect(() => {
         backgroundSize: 'cover',
         backgroundPosition: 'center top',
         backgroundRepeat: 'no-repeat',
-        zIndex: 1,
+        zIndex: 1
       }}
     >
+      {/* Modal TikTok */}
       {showModal && (
         <motion.div
           className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center px-4"
@@ -145,6 +150,7 @@ useEffect(() => {
         </motion.div>
       )}
 
+      {/* Capas de fondo */}
       <motion.div
         className="absolute inset-0 bg-black z-0"
         initial={{ opacity: 1 }}
@@ -159,6 +165,7 @@ useEffect(() => {
         transition={{ duration: 1.8, delay: 0.6, ease: 'easeOut' }}
       />
 
+      {/* Contenido principal */}
       <motion.div
         className="relative z-20 px-6 text-white flex flex-col items-center space-y-10"
         initial="hidden"
