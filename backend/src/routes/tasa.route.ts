@@ -1,41 +1,59 @@
 // ✅ FILE: src/routes/tasa.route.ts
-
-import {
-  Router,
-  type Request,
-  type Response,
-  type Router as RouterType
-} from 'express'
+import { Router } from 'express'
 import axios from 'axios'
 
-// ✅ Corrección crítica de tipado explícito
-const router: RouterType = Router()
+const router = Router()
 
-// 📈 GET /api/tasa-bcv – Obtener tasa oficial del BCV
-router.get('/tasa-bcv', async (_req: Request, res: Response): Promise<Response> => {
+type CacheTasa = {
+  tasa: number
+  fecha: string
+  fuente: string
+  ts: number
+}
+let cache: CacheTasa | null = null
+const TTL_MS = 5 * 60 * 1000 // 5 min
+
+router.get('/tasa-bcv', async (_req, res) => {
   try {
-    const { data } = await axios.get('https://ve.dolarapi.com/v1/dolares')
-
-    const oficial = Array.isArray(data)
-      ? data.find(
-          (item: any) =>
-            typeof item === 'object' &&
-            item?.fuente?.toLowerCase?.() === 'oficial' &&
-            typeof item?.promedio === 'string'
-        )
-      : null
-
-    const tasa = oficial ? parseFloat(oficial.promedio) : null
-
-    if (tasa && !isNaN(tasa) && tasa > 0) {
-      return res.status(200).json({ tasa })
+    // Sirve cache fresca
+    if (cache && Date.now() - cache.ts < TTL_MS) {
+      return res.set('Cache-Control', 'public, max-age=60').json(cache)
     }
 
-    console.warn('⚠️ Tasa oficial no válida:', oficial)
-    return res.status(404).json({ error: '❌ Tasa oficial no encontrada o inválida' })
-  } catch (error) {
-    console.error('❌ Error al obtener la tasa BCV:', error)
-    return res.status(500).json({ error: 'Error al obtener la tasa BCV' })
+    // 1) Intenta endpoint directo "oficial"
+    // Docs: https://ve.dolarapi.com/v1/dolares/oficial
+    // (schema incluye "promedio", "fechaActualizacion", "fuente")
+    const r1 = await axios.get('https://ve.dolarapi.com/v1/dolares/oficial', { timeout: 9000 })
+    let data: any = r1.data
+
+    // 2) Fallback: lista completa si el host cambia algo
+    if (!data?.promedio) {
+      const r2 = await axios.get('https://ve.dolarapi.com/v1/dolares', { timeout: 9000 })
+      const arr = Array.isArray(r2.data) ? r2.data : []
+      data = arr.find((x: any) =>
+        x?.fuente?.toLowerCase?.() === 'oficial' ||
+        x?.nombre?.toLowerCase?.().includes('oficial')
+      )
+    }
+
+    const tasa = Number(data?.promedio)
+    if (!Number.isFinite(tasa) || tasa <= 0) throw new Error('Tasa inválida')
+
+    cache = {
+      tasa,
+      fecha: data?.fechaActualizacion ?? new Date().toISOString(),
+      fuente: data?.fuente ?? data?.nombre ?? 'BCV',
+      ts: Date.now()
+    }
+
+    return res.set('Cache-Control', 'public, max-age=60').json(cache)
+  } catch (e) {
+    console.error('❌ /tasa-bcv error:', (e as Error)?.message || e)
+    // Sirve cache vieja si hay (mejor UX)
+    if (cache) {
+      return res.set('Cache-Control', 'no-store').json({ ...cache, stale: true })
+    }
+    return res.status(502).json({ error: 'No se pudo obtener la tasa del BCV' })
   }
 })
 
