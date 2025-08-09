@@ -1,15 +1,16 @@
 // ✅ FILE: src/routes/admin.routes.ts
 import { Router } from 'express'
+import type { Router as ExpressRouter, Request, Response } from 'express'
 
 import {
   obtenerUsuariosConPagoPendiente,
-  obtenerUsuariosConPagoVerificado
+  obtenerUsuariosConPagoVerificado,
 } from '../memory/memory.mongo.js'
 
 import {
   listarPedidos,
   obtenerPedido,
-  actualizarEstadoPedido
+  actualizarEstadoPedido,
 } from '../controllers/admin.pedidos.controller.js'
 
 /**
@@ -25,27 +26,31 @@ import {
  *   PUT    /api/admin/pedidos/:id
  */
 
-const router = Router()
+const router: ExpressRouter = Router()
 
 // 📦 Usuarios con pago pendiente (memoria)
-router.get('/pendientes', async (_req, res) => {
+router.get('/pendientes', async (_req: Request, res: Response): Promise<void> => {
   try {
     const usuarios = await obtenerUsuariosConPagoPendiente()
     res.status(200).json(usuarios)
   } catch (error) {
     console.error('❌ Error al obtener usuarios pendientes:', error)
-    res.status(500).json({ error: 'Error interno al obtener usuarios con pago pendiente' })
+    res
+      .status(500)
+      .json({ error: 'Error interno al obtener usuarios con pago pendiente' })
   }
 })
 
 // ✅ Usuarios con pago verificado (memoria)
-router.get('/verificados', async (_req, res) => {
+router.get('/verificados', async (_req: Request, res: Response): Promise<void> => {
   try {
     const usuarios = await obtenerUsuariosConPagoVerificado()
     res.status(200).json(usuarios)
   } catch (error) {
     console.error('❌ Error al obtener usuarios verificados:', error)
-    res.status(500).json({ error: 'Error interno al obtener usuarios con pago verificado' })
+    res
+      .status(500)
+      .json({ error: 'Error interno al obtener usuarios con pago verificado' })
   }
 })
 

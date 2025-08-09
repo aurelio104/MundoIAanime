@@ -1,32 +1,33 @@
 // ✅ FILE: src/routes/pedidos.routes.ts
 import { Router } from 'express'
+import type { Router as ExpressRouter, Request, Response } from 'express'
+
 import {
   registrarPedido,
   obtenerPedidosPublic,
-  confirmarPedido
+  confirmarPedido,
 } from '../controllers/pedidos.controller.js'
 
 /**
- * Nota de montaje:
- * En tu main/server:
+ * Montaje en el servidor:
  *   import pedidosRoutes from './routes/pedidos.routes.js'
  *   app.use('/api/pedidos', pedidosRoutes)
  *
- * Así, estas rutas quedan:
- *   POST   /api/pedidos              -> registrarPedido
- *   GET    /api/pedidos              -> obtenerPedidosPublic  (opcional para admin)
- *   PATCH  /api/pedidos/:id/confirmar -> confirmarPedido
+ * Endpoints:
+ *   POST   /api/pedidos                 -> registrarPedido
+ *   GET    /api/pedidos                 -> obtenerPedidosPublic  (opcional)
+ *   PATCH  /api/pedidos/:id/confirmar   -> confirmarPedido
  */
 
-const router = Router()
+const router: ExpressRouter = Router()
 
 // Crear pedido desde el sitio público (web)
-router.post('/', registrarPedido)
+router.post('/', (req: Request, res: Response) => void registrarPedido(req, res))
 
 // (Opcional) Listar pedidos públicamente. Si prefieres solo admin, elimina esta línea.
-router.get('/', obtenerPedidosPublic)
+router.get('/', (req: Request, res: Response) => void obtenerPedidosPublic(req, res))
 
-// Confirmar un pedido (si mantienes esta ruta pública; de lo contrario muévelo a admin)
-router.patch('/:id/confirmar', confirmarPedido)
+// Confirmar un pedido (si la mantienes pública; si no, muévela a /api/admin)
+router.patch('/:id/confirmar', (req: Request, res: Response) => void confirmarPedido(req, res))
 
 export default router
