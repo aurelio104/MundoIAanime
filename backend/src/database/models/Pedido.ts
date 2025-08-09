@@ -1,5 +1,5 @@
-// ✅ src/database/models/Pedido.ts
-import mongoose, { Schema, type Document } from 'mongoose'
+// ⚠️ Solo si no usas el re-export de arriba
+import mongoose, { Schema, type Document, type Model } from 'mongoose'
 
 export interface PedidoDoc extends Document {
   id: string
@@ -32,14 +32,19 @@ const PedidoSchema = new Schema<PedidoDoc>(
     metodoPago: String,
     datosPago: {
       referencia: String,
-      fecha: String
+      fecha: String,
     },
     productos: [String],
     tallas: [String],
     colores: [String],
-    preciosUnitarios: [Number]
+    preciosUnitarios: [Number],
   },
   { timestamps: true }
 )
 
-export const PedidoModel = mongoose.model<PedidoDoc>('Pedido', PedidoSchema)
+// 👇 clave para no re-registrar el modelo
+export const PedidoModel: Model<PedidoDoc> =
+  (mongoose.models.Pedido as Model<PedidoDoc>) ||
+  mongoose.model<PedidoDoc>('Pedido', PedidoSchema)
+
+export default PedidoModel
