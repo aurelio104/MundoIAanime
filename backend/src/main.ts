@@ -1,5 +1,10 @@
 // ✅ FILE: src/main.ts
-import express, { type Application, type Request, type Response, type NextFunction } from 'express'
+import express, {
+  type Application,
+  type Request,
+  type Response,
+  type NextFunction
+} from 'express'
 import mongoose from 'mongoose'
 import cors from 'cors'
 import dotenv from 'dotenv'
@@ -13,6 +18,7 @@ import axios from 'axios'
 // Internos
 import { startBot } from './core/client.js'
 import User from './models/User.model.js'
+import PedidoModel from './models/Pedido.model.js'
 import catalogAdminRoutes from './routes/catalog.admin.routes.js'
 import adminPedidosRoute from './routes/admin.routes.js'
 import registerAdminRoute from './routes/registerAdmin.route.js'
@@ -46,42 +52,57 @@ process.on('uncaughtException', (err) => {
   process.exit(1)
 })
 
+/** 🧰 Arreglo de índices para la colección de pedidos
+ *  - Elimina un índice único incorrecto en `id`
+ *  - Asegura el índice único correcto en `idCompra`
+ */
+async function fixPedidoIndexes() {
+  try {
+    // Quita el índice malo si existe: id_1
+    await PedidoModel.collection.dropIndex('id_1').catch(() => {})
+    // Asegura el índice único correcto
+    await PedidoModel.collection.createIndex({ idCompra: 1 }, { unique: true })
+    console.log('✅ Índices de Pedido verificados/corregidos')
+  } catch (e) {
+    console.error('⚠️ No se pudieron ajustar índices de Pedido:', e)
+  }
+}
+
 async function startServer() {
-  // 👇 Usa este tipo para que clearInterval no dé error (TS2345)
+  // para clearInterval/close tip-safe
   let keepAliveTimer: ReturnType<typeof setInterval> | null = null
   let server: ReturnType<Application['listen']> | null = null
 
   try {
-    // MongoDB
+    // Conexión MongoDB
     await mongoose.connect(MONGO_URI, {
       ssl: isProduction,
       serverSelectionTimeoutMS: 10_000
     })
     console.log('✅ Conectado a MongoDB')
 
-    const app: Application = express()
+    // Fix índices de pedidos (evita E11000 dup key { id: null })
+    await fixPedidoIndexes()
 
-    // Confía en múltiples proxies (Vercel, Koyeb, etc.)
-    app.set('trust proxy', true)
+    const app: Application = express()
+    app.set('trust proxy', true) // confía en proxies (Vercel/Koyeb)
 
     // Orígenes permitidos
     const envAllowed = (process.env.ALLOWED_ORIGINS || '')
       .split(',')
-      .map(s => s.trim())
+      .map((s) => s.trim())
       .filter(Boolean)
 
     const defaultAllowedProd = [
       'https://mundoiaanime.com',
       'https://admin.mundoiaanime.com'
     ]
-
-    const defaultAllowedDev = [
-      'http://localhost:5173',
-      'http://localhost:4173'
-    ]
+    const defaultAllowedDev = ['http://localhost:5173', 'http://localhost:4173']
 
     const allowedOrigins = isProduction
-      ? (envAllowed.length ? envAllowed : defaultAllowedProd)
+      ? envAllowed.length
+        ? envAllowed
+        : defaultAllowedProd
       : defaultAllowedDev
 
     const isAllowedOrigin = (origin?: string) => {
@@ -99,63 +120,66 @@ async function startServer() {
 
     // Seguridad HTTP + CORS
     app.use(helmet({ contentSecurityPolicy: false }))
-
-    app.use(cors({
-      origin: (origin, callback) => {
-        if (isAllowedOrigin(origin || undefined)) return callback(null, true)
-        console.error('❌ Origen bloqueado por CORS:', origin)
-        return callback(new Error('Origen no permitido por CORS'))
-      },
-      credentials: true,
-      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
-    }))
-
+    app.use(
+      cors({
+        origin: (origin, callback) => {
+          if (isAllowedOrigin(origin || undefined)) return callback(null, true)
+          console.error('❌ Origen bloqueado por CORS:', origin)
+          return callback(new Error('Origen no permitido por CORS'))
+        },
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+      })
+    )
     app.options('*', cors())
 
-// Rate limit con excepciones + IP real
-const EXEMPT = new Set<string>([
-  '/',
-  '/healthz',
-  '/api/check-auth',
-  '/api/login',
-  '/api/logout',
-  '/api/tasa-bcv'
-])
+    // Rate limit con excepciones + IP real
+    const EXEMPT = new Set<string>([
+      '/',
+      '/healthz',
+      '/api/check-auth',
+      '/api/login',
+      '/api/logout',
+      '/api/tasa-bcv'
+    ])
 
-const limiter = rateLimit({
-  windowMs: 60_000,
-  limit: 300,
-  standardHeaders: true,
-  legacyHeaders: false,
-  keyGenerator: (req: Request, _res: Response): string => {
-    const xrHeader = req.headers['x-real-ip']
-    const xr = typeof xrHeader === 'string' ? xrHeader : undefined
+    const limiter = rateLimit({
+      windowMs: 60_000,
+      limit: 300,
+      standardHeaders: true,
+      legacyHeaders: false,
+      keyGenerator: (req: Request): string => {
+        const xrHeader = req.headers['x-real-ip']
+        const xr = typeof xrHeader === 'string' ? xrHeader : undefined
 
-    const xffHeader = req.headers['x-forwarded-for']
-    const xffRaw = Array.isArray(xffHeader) ? xffHeader[0] : xffHeader
-    const xff = typeof xffRaw === 'string' ? xffRaw.split(',')[0]?.trim() : undefined
+        const xffHeader = req.headers['x-forwarded-for']
+        const xffRaw = Array.isArray(xffHeader) ? xffHeader[0] : xffHeader
+        const xff =
+          typeof xffRaw === 'string' ? xffRaw.split(',')[0]?.trim() : undefined
 
-    // fuerza retorno string; req.ip es string, y dejamos un fallback por si acaso
-    const ip: string = xr ?? xff ?? req.ip ?? 'unknown'
-    return ip
-  },
-  skip: (req: Request): boolean => {
-    const url = (req.originalUrl || req.url || '').split('?')[0]
-    return req.method === 'OPTIONS' || EXEMPT.has(url)
-  },
-  handler: (req, res, _next, opts) => {
-    const xrHeader = req.headers['x-real-ip']
-    const xr = typeof xrHeader === 'string' ? xrHeader : undefined
-    const xffHeader = req.headers['x-forwarded-for']
-    const xffRaw = Array.isArray(xffHeader) ? xffHeader[0] : xffHeader
-    const xff = typeof xffRaw === 'string' ? xffRaw.split(',')[0]?.trim() : undefined
-    const ip: string = xr ?? xff ?? req.ip ?? 'unknown'
-    console.warn('429 rate-limited:', ip, req.method, req.originalUrl)
-    res.status(opts.statusCode || 429).json({ error: '⚠️ Demasiadas solicitudes, intenta en unos segundos.' })
-  }
-})
-app.use(limiter)
+        const ip: string = xr ?? xff ?? req.ip ?? 'unknown'
+        return ip
+      },
+      skip: (req: Request): boolean => {
+        const url = (req.originalUrl || req.url || '').split('?')[0]
+        return req.method === 'OPTIONS' || EXEMPT.has(url)
+      },
+      handler: (req, res, _next, opts) => {
+        const xrHeader = req.headers['x-real-ip']
+        const xr = typeof xrHeader === 'string' ? xrHeader : undefined
+        const xffHeader = req.headers['x-forwarded-for']
+        const xffRaw = Array.isArray(xffHeader) ? xffHeader[0] : xffHeader
+        const xff =
+          typeof xffRaw === 'string' ? xffRaw.split(',')[0]?.trim() : undefined
+        const ip: string = xr ?? xff ?? req.ip ?? 'unknown'
+        console.warn('429 rate-limited:', ip, req.method, req.originalUrl)
+        res
+          .status(opts.statusCode || 429)
+          .json({ error: '⚠️ Demasiadas solicitudes, intenta en unos segundos.' })
+      }
+    })
+    app.use(limiter)
 
     // Parsers
     app.use(express.json({ limit: '100kb' }))
@@ -182,9 +206,9 @@ app.use(limiter)
 
     // Rutas públicas
     app.use(registerAdminRoute)
-    app.use('/api', authRoutes)            // /api/login, /api/logout, /api/check-auth
-    app.use('/api', tasaRoute)             // /api/tasa-bcv
-    app.use('/api', visitasRoute)          // /api/visitas
+    app.use('/api', authRoutes) // /api/login, /api/logout, /api/check-auth
+    app.use('/api', tasaRoute) // /api/tasa-bcv
+    app.use('/api', visitasRoute) // /api/visitas
     app.use('/api/pedidos', pedidosRoutes) // /api/pedidos (POST, GET, PATCH)
 
     // Rutas privadas protegidas
@@ -214,13 +238,16 @@ app.use(limiter)
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
       console.error('💥 Error middleware:', err)
       if (res.headersSent) return
-      res.status(err?.status || 500).json({ error: err?.message || 'Error interno del servidor' })
+      res
+        .status(err?.status || 500)
+        .json({ error: err?.message || 'Error interno del servidor' })
     })
 
     // Keep-alive (solo prod)
     if (isProduction && ENABLE_KEEPALIVE && SELF_URL.startsWith('http')) {
       keepAliveTimer = setInterval(() => {
-        axios.get(`${SELF_URL}/healthz`, { timeout: 5000 })
+        axios
+          .get(`${SELF_URL}/healthz`, { timeout: 5000 })
           .then(() => console.log('📡 Ping keep-alive OK'))
           .catch((err) => console.error('⚠️ Ping fallido:', err?.message || err))
       }, 12 * 60 * 1000)
