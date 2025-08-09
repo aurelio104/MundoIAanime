@@ -1,5 +1,5 @@
 // ✅ FILE: src/models/Pedido.model.ts
-import { Schema, model, models, type Document, type Model } from 'mongoose'
+import mongoose, { Schema, model, type Document, type Model } from 'mongoose'
 
 export type EstadoPedido =
   | 'pendiente'
@@ -55,12 +55,7 @@ const PedidoSchema = new Schema<IPedido>(
     },
     nombre: { type: String, required: true, trim: true },
     apellido: { type: String, required: true, trim: true },
-    correo: {
-      type: String,
-      required: true,
-      trim: true,
-      lowercase: true
-    },
+    correo: { type: String, required: true, trim: true, lowercase: true },
     canal: { type: String, default: 'web', enum: ['web', 'whatsapp', 'otro'] },
     metodoPago: { type: String },
     datosPago: {
@@ -81,6 +76,7 @@ const PedidoSchema = new Schema<IPedido>(
         return ret
       }
     }
+    // opcional: collection: 'pedidos',
   }
 )
 
@@ -89,8 +85,8 @@ PedidoSchema.index({ createdAt: -1 })
 PedidoSchema.index({ correo: 1 })
 PedidoSchema.index({ estado: 1, createdAt: -1 })
 
-// 🛡️ Evita OverwriteModelError en hot-reloads / builds
+// 🛡️ Evita OverwriteModelError en hot-reloads / serverless
 export const PedidoModel: Model<IPedido> =
-  (models.Pedido as Model<IPedido>) || model<IPedido>('Pedido', PedidoSchema)
+  (mongoose.models.Pedido as Model<IPedido>) || model<IPedido>('Pedido', PedidoSchema)
 
 export default PedidoModel
