@@ -1,21 +1,23 @@
 // ✅ FILE: src/models/Pedido.model.ts
 import { Schema, model, models, type Document, type Model } from 'mongoose'
 
+export type EstadoPedido =
+  | 'pendiente'
+  | 'pago_verificado'
+  | 'en_fabrica'
+  | 'empaquetado'
+  | 'enviado'
+  | 'en_camino'
+  | 'entregado'
+  | 'recibido'
+  | 'cancelado'
+
 export interface IPedido extends Document {
   idCompra: string
   cursoTitulo: string
   precioUSD: number
   precioTexto: string
-  estado:
-    | 'pendiente'
-    | 'pago_verificado'
-    | 'en_fabrica'
-    | 'empaquetado'
-    | 'enviado'
-    | 'en_camino'
-    | 'entregado'
-    | 'recibido'
-    | 'cancelado'
+  estado: EstadoPedido
   nombre: string
   apellido: string
   correo: string
@@ -34,26 +36,60 @@ const PedidoSchema = new Schema<IPedido>(
   {
     idCompra: { type: String, required: true, index: true, unique: true },
     cursoTitulo: { type: String, required: true },
-    precioUSD: { type: Number, required: true },
-    precioTexto: { type: String, required: true },
-    estado: { type: String, default: 'pendiente' },
-    nombre: { type: String, required: true },
-    apellido: { type: String, required: true },
-    correo: { type: String, required: true },
-    canal: { type: String, default: 'web' },
+    precioUSD: { type: Number, required: true, min: 0 },
+    precioTexto: { type: String, required: true }, // p.ej. "$9.99"
+    estado: {
+      type: String,
+      default: 'pendiente',
+      enum: [
+        'pendiente',
+        'pago_verificado',
+        'en_fabrica',
+        'empaquetado',
+        'enviado',
+        'en_camino',
+        'entregado',
+        'recibido',
+        'cancelado'
+      ]
+    },
+    nombre: { type: String, required: true, trim: true },
+    apellido: { type: String, required: true, trim: true },
+    correo: {
+      type: String,
+      required: true,
+      trim: true,
+      lowercase: true
+    },
+    canal: { type: String, default: 'web', enum: ['web', 'whatsapp', 'otro'] },
     metodoPago: { type: String },
     datosPago: {
-      referencia: String,
-      fecha: String,
+      referencia: { type: String },
+      fecha: { type: String }
     },
-    telefono: String,
+    telefono: { type: String }
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    // 🔧 para que el front reciba "id" en vez de "_id" y sin "__v"
+    toJSON: {
+      virtuals: true,
+      versionKey: false,
+      transform: (_doc, ret) => {
+        ret.id = ret._id?.toString?.()
+        delete ret._id
+        return ret
+      }
+    }
+  }
 )
 
+// 📈 Índices útiles
 PedidoSchema.index({ createdAt: -1 })
+PedidoSchema.index({ correo: 1 })
+PedidoSchema.index({ estado: 1, createdAt: -1 })
 
-// 👇 clave para evitar OverwriteModelError
+// 🛡️ Evita OverwriteModelError en hot-reloads / builds
 export const PedidoModel: Model<IPedido> =
   (models.Pedido as Model<IPedido>) || model<IPedido>('Pedido', PedidoSchema)
 
