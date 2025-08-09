@@ -7,17 +7,34 @@ const PRECIOS: Record<string, number> = {
   'Crea Caminatas Apocalípticas con personajes usando IA': 9.99,
   'Crea Videos de Anime en Live Action Estilo Selfie con IA': 9.99,
   'Crea Videos de Anime en Live Action Cinematográficos con IA': 9.99,
-  'Crea Podcast Hiper-realistas con tus personajes favoritos usando IA': 9.99
+  'Crea Podcast Hiper-realistas con tus personajes favoritos usando IA': 9.99,
 }
 
+// ─────────── Utils ───────────
 const isObjectId = (id: string) => /^[a-f\d]{24}$/i.test(id)
-const normalize = (s?: string) => (typeof s === 'string' ? s.trim() : '')
-const normalizeEmail = (s?: string) => normalize(s).toLowerCase()
-const isValidEmail = (s?: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizeEmail(s))
+const normalize = (s?: unknown) => (typeof s === 'string' ? s.trim() : '')
+const normalizeEmail = (s?: unknown) =>
+  (typeof s === 'string' ? s.trim().toLowerCase() : '')
+const isValidEmail = (s?: unknown) =>
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizeEmail(s))
+
+const genIdCompra = () =>
+  Math.random().toString(36).substring(2, 10).toUpperCase()
+
+const safePedidoResponse = (p: any) => ({
+  id: p._id?.toString?.() ?? p.id,
+  idCompra: p.idCompra,
+  estado: p.estado,
+  total: p.precioUSD,
+  totalTexto: p.precioTexto,
+  createdAt: p.createdAt,
+})
+
+// ─────────── Controllers ───────────
 
 /**
  * POST /api/pedidos
- * Registra un pedido desde la web. Idempotente por idCompra.
+ * Registra un pedido desde la web. Idempotente por idCompra (si el cliente lo envía).
  */
 export const registrarPedido = async (req: Request, res: Response) => {
   try {
@@ -27,19 +44,24 @@ export const registrarPedido = async (req: Request, res: Response) => {
       apellido,
       correo,
       idCompra,
-      // fechaISO no se persiste (usamos createdAt), pero se acepta sin romper
-      canal
+      canal,
+      metodoPago,
+      datosPago,
+      telefono,
+      // fechaISO ignorada; usamos createdAt del modelo
     } = req.body || {}
 
-    const _curso = normalize(cursoTitulo)
-    const _nombre = normalize(nombre)
-    const _apellido = normalize(apellido)
-    const _correo = normalizeEmail(correo)
-    const _idCompra = normalize(idCompra)
-    const _canal = (normalize(canal) as 'web' | 'whatsapp' | 'otro') || 'web'
+    const _curso = String(normalize(cursoTitulo))
+    const _nombre = String(normalize(nombre))
+    const _apellido = String(normalize(apellido))
+    const _correo = String(normalizeEmail(correo))
+    let _idCompra = String(normalize(idCompra) || '')
+    const _canal = (String(normalize(canal)) as 'web' | 'whatsapp' | 'otro') || 'web'
+    const _metodoPago = String(normalize(metodoPago) || '')
+    const _telefono = String(normalize(telefono) || '')
 
     // Validaciones básicas
-    if (!_curso || !_nombre || !_apellido || !_correo || !_idCompra) {
+    if (!_curso || !_nombre || !_apellido || !_correo) {
       return res.status(400).json({ error: 'Faltan campos requeridos' })
     }
     if (!isValidEmail(_correo)) {
@@ -51,85 +73,117 @@ export const registrarPedido = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Curso no válido' })
     }
 
-    // Idempotencia por idCompra: si existe, devolverlo
-    const existing = await PedidoModel.findOne({ idCompra: _idCompra }).lean().exec()
-    if (existing) {
-      return res.status(200).json({
-        id: existing._id?.toString?.(),
-        idCompra: existing.idCompra,
-        estado: existing.estado,
-        total: existing.precioUSD,
-        totalTexto: existing.precioTexto,
-        createdAt: existing.createdAt
-      })
+    // Idempotencia si el cliente trae un idCompra válido
+    if (_idCompra) {
+      const existing = await PedidoModel.findOne({ idCompra: _idCompra }).lean().exec()
+      if (existing) {
+        return res.status(200).json(safePedidoResponse(existing))
+      }
     }
 
-    const pedido = await PedidoModel.create({
-      idCompra: _idCompra,
+    // Si no trae idCompra, se genera
+    if (!_idCompra) _idCompra = genIdCompra()
+
+    // Doc base
+    const baseDoc: any = {
+      idCompra: _idCompra,           // el schema lo normaliza a MAYÚSCULAS
       cursoTitulo: _curso,
       precioUSD,
+      // precioTexto se autogenera si falta (schema default)
       precioTexto: `$${precioUSD.toFixed(2)}`,
       estado: 'pendiente',
       nombre: _nombre,
       apellido: _apellido,
       correo: _correo,
-      canal: _canal
-    })
+      canal: _canal,
+    }
 
-    return res.status(201).json({
-      id: pedido.id, // viene del virtual transform
-      idCompra: pedido.idCompra,
-      estado: pedido.estado,
-      total: pedido.precioUSD,
-      totalTexto: pedido.precioTexto,
-      createdAt: pedido.createdAt
-    })
+    if (_metodoPago) baseDoc.metodoPago = _metodoPago
+    if (_telefono) baseDoc.telefono = _telefono
+    if (datosPago && typeof datosPago === 'object') {
+      baseDoc.datosPago = {
+        referencia: normalize((datosPago as any).referencia),
+        fecha: normalize((datosPago as any).fecha),
+      }
+    }
+
+    // Crear con reintentos si colisiona idCompra (índice unique)
+    let intentos = 0
+    let saved: any = null
+    while (intentos < 3) {
+      try {
+        if (intentos > 0) {
+          baseDoc.idCompra = genIdCompra()
+        }
+        saved = await PedidoModel.create(baseDoc)
+        break
+      } catch (e: any) {
+        if (e?.code === 11000 && e?.keyPattern?.idCompra) {
+          intentos++
+          continue
+        }
+        if (e?.name === 'ValidationError') {
+          const msg = Object.values(e.errors || {})
+            .map((x: any) => x?.message)
+            .filter(Boolean)
+            .join(', ')
+          return res.status(400).json({ error: msg || 'Datos inválidos' })
+        }
+        console.error('❌ Error al crear pedido:', e)
+        return res.status(500).json({ error: 'Error al guardar el pedido' })
+      }
+    }
+
+    if (!saved) {
+      return res.status(409).json({ error: 'No fue posible generar un idCompra único' })
+    }
+
+    return res.status(201).json(safePedidoResponse(saved))
   } catch (err) {
-    console.error('❌ Error al guardar el pedido:', err)
+    console.error('❌ /api/pedidos POST fallo inesperado:', err)
     return res.status(500).json({ error: 'Error al guardar el pedido' })
   }
 }
 
 /**
  * GET /api/pedidos
- * Público (o semi-público): lista pedidos (si lo usas en admin, protégelo con middleware en rutas).
+ * Público: lista pedidos (si lo usas para admin, protégelo en la ruta).
+ * Tip: añade paginación con ?page=1&pageSize=50 si lo necesitas.
  */
-export const obtenerPedidosPublic = async (_req: Request, res: Response) => {
+export const obtenerPedidosPublic = async (req: Request, res: Response) => {
   try {
-    const pedidos = await PedidoModel.find({})
-      .sort({ createdAt: -1 })
-      .select({
-        _id: 1,
-        idCompra: 1,
-        cursoTitulo: 1,
-        precioUSD: 1,
-        precioTexto: 1,
-        estado: 1,
-        nombre: 1,
-        apellido: 1,
-        correo: 1,
-        canal: 1,
-        createdAt: 1
-      })
-      .lean()
-      .exec()
+    const page = Math.max(1, Number(req.query.page) || 1)
+    const pageSize = Math.min(100, Math.max(1, Number(req.query.pageSize) || 50))
 
-    // Normaliza id en la respuesta
-    const safe = pedidos.map((p: any) => ({
-      id: p._id?.toString?.(),
-      idCompra: p.idCompra,
-      cursoTitulo: p.cursoTitulo,
-      precioUSD: p.precioUSD,
-      precioTexto: p.precioTexto,
-      estado: p.estado,
-      nombre: p.nombre,
-      apellido: p.apellido,
-      correo: p.correo,
-      canal: p.canal,
-      createdAt: p.createdAt
-    }))
+    const [items, total] = await Promise.all([
+      PedidoModel.find({})
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * pageSize)
+        .limit(pageSize)
+        .select({
+          _id: 1,
+          idCompra: 1,
+          cursoTitulo: 1,
+          precioUSD: 1,
+          precioTexto: 1,
+          estado: 1,
+          nombre: 1,
+          apellido: 1,
+          correo: 1,
+          canal: 1,
+          createdAt: 1
+        })
+        .lean()
+        .exec(),
+      PedidoModel.countDocuments().exec()
+    ])
 
-    res.json(safe)
+    res.json({
+      total,
+      page,
+      pageSize,
+      items: items.map(safePedidoResponse)
+    })
   } catch (err) {
     console.error('❌ Error al obtener pedidos:', err)
     res.status(500).json({ error: 'Error interno al listar pedidos' })
@@ -138,32 +192,48 @@ export const obtenerPedidosPublic = async (_req: Request, res: Response) => {
 
 /**
  * PATCH /api/pedidos/:id/confirmar
- * Marca pedido como pago_verificado. Acepta :id como _id de Mongo o como idCompra.
+ * Marca como pago_verificado. :id puede ser ObjectId o idCompra.
+ * Acepta en body opcionalmente: { datosPago: { referencia, fecha }, metodoPago }
+ * Valida con runValidators (el schema exige referencia/fecha cuando estado=pago_verificado).
  */
 export const confirmarPedido = async (req: Request, res: Response) => {
   try {
     const { id } = req.params
-    const identificador = normalize(id)
-
-    let pedido = null
-    if (isObjectId(identificador)) {
-      pedido = await PedidoModel.findByIdAndUpdate(
-        identificador,
-        { estado: 'pago_verificado' },
-        { new: true }
-      ).exec()
-    } else {
-      pedido = await PedidoModel.findOneAndUpdate(
-        { idCompra: identificador },
-        { estado: 'pago_verificado' },
-        { new: true }
-      ).exec()
+    const identificador = String(normalize(id))
+    const { datosPago, metodoPago } = (req.body || {}) as {
+      datosPago?: { referencia?: string; fecha?: string }
+      metodoPago?: string
     }
 
+    const update: any = { estado: 'pago_verificado' }
+    if (datosPago && typeof datosPago === 'object') {
+      update.datosPago = {
+        referencia: normalize(datosPago.referencia),
+        fecha: normalize(datosPago.fecha),
+      }
+    }
+    if (metodoPago) update.metodoPago = normalize(metodoPago)
+
+    const opts = { new: true, runValidators: true }
+
+    const query = isObjectId(identificador)
+      ? { _id: identificador }
+      : { idCompra: identificador.toUpperCase() }
+
+    const pedido = await PedidoModel.findOneAndUpdate(query, update, opts).exec()
+
     if (!pedido) return res.sendStatus(404)
-    return res.sendStatus(200)
-  } catch (err) {
+    return res.status(200).json(safePedidoResponse(pedido))
+  } catch (err: any) {
+    // Si falla la validación del schema (p.ej. falta referencia/fecha)
+    if (err?.name === 'ValidationError') {
+      const msg = Object.values(err.errors || {})
+        .map((x: any) => x?.message)
+        .filter(Boolean)
+        .join(', ')
+      return res.status(422).json({ error: msg || 'Validación fallida' })
+    }
     console.error('❌ Error al confirmar pedido:', err)
-    return res.status(500).send('Error al confirmar el pedido')
+    return res.status(500).json({ error: 'Error al confirmar el pedido' })
   }
 }
