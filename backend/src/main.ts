@@ -1,4 +1,5 @@
-import express, { Application, Request, Response } from 'express'
+// ✅ FILE: src/main.ts
+import express, { type Application, type Request, type Response } from 'express'
 import mongoose from 'mongoose'
 import cors from 'cors'
 import dotenv from 'dotenv'
@@ -18,6 +19,7 @@ import registerAdminRoute from './routes/registerAdmin.route.js'
 import authRoutes from './routes/auth.routes.js'
 import tasaRoute from './routes/tasa.route.js'
 import visitasRoute from './routes/visitas.route.js'
+import pedidosRoutes from './routes/pedidos.routes.js'   // 👈 NUEVO: rutas públicas de pedidos
 import { authMiddleware } from './middleware/verifyToken.js'
 
 // Variables de entorno
@@ -62,18 +64,19 @@ async function startServer() {
     app.use(helmet({ contentSecurityPolicy: false }))
     app.use(cors({
       origin: (origin, callback) => {
+        // Nota: los navegadores no dejan setear manualmente el header "Origin" en el front;
+        // si ves "Refused to set unsafe header Origin", viene del cliente, no del server.
         if (!origin || allowedOrigins.includes(origin)) {
-          callback(null, true)
-        } else {
-          console.error('❌ Origen bloqueado por CORS:', origin)
-          callback(new Error('❌ Origen no permitido por CORS'))
+          return callback(null, true)
         }
+        console.error('❌ Origen bloqueado por CORS:', origin)
+        return callback(new Error('❌ Origen no permitido por CORS'))
       },
       credentials: true,
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
     }))
 
-    // Middleware generales
+    // Middlewares generales
     app.use(rateLimit({
       windowMs: 15 * 60 * 1000, // 15 minutos
       max: 100,
@@ -95,9 +98,10 @@ async function startServer() {
 
     // Rutas públicas
     app.use(registerAdminRoute)
-    app.use('/api', authRoutes)        // /api/login, /api/logout, /api/check-auth
-    app.use('/api', tasaRoute)         // /api/tasa-bcv
-    app.use('/api', visitasRoute)      // /api/visitas
+    app.use('/api', authRoutes)           // /api/login, /api/logout, /api/check-auth
+    app.use('/api', tasaRoute)            // /api/tasa-bcv
+    app.use('/api', visitasRoute)         // /api/visitas
+    app.use('/api/pedidos', pedidosRoutes) // 👈 IMPORTANTE: /api/pedidos (POST, GET, PATCH)
 
     // Rutas privadas protegidas
     app.use('/api/catalog', authMiddleware, catalogAdminRoutes)

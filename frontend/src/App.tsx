@@ -1,7 +1,6 @@
 // ✅ FILE: src/App.tsx
-
 import React, { Suspense, lazy } from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 
 // 🧠 Contextos globales
@@ -31,7 +30,20 @@ const AdminDashboard = lazy(() => import('./components/AdminDashboard'))
 const DashboardProductos = lazy(() => import('./components/DashboardProductos'))
 const AdminPedidos = lazy(() => import('./components/AdminPedidos'))
 const AdminPedidoDetalle = lazy(() => import('./components/AdminPedidoDetalle'))
-const AdminVisitas = lazy(() => import('./components/AdminVisitas')) // ✅ NUEVO
+const AdminVisitas = lazy(() => import('./components/AdminVisitas'))
+
+// 404 simple
+const NotFound: React.FC = () => (
+  <div className="min-h-screen grid place-items-center bg-black text-white">
+    <div className="text-center space-y-3">
+      <h1 className="text-3xl font-bold">404</h1>
+      <p className="text-white/70">Página no encontrada</p>
+      <a href="/" className="inline-block mt-2 px-4 py-2 rounded-full bg-white text-black text-sm font-semibold">
+        Volver al inicio
+      </a>
+    </div>
+  </div>
+)
 
 const App: React.FC = () => {
   return (
@@ -120,6 +132,10 @@ const App: React.FC = () => {
                 </Suspense>
               }
             />
+
+            {/* Redirecciones y 404 */}
+            <Route path="/admin/*" element={<Navigate to="/admin/dashboard" replace />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </div>
       </CartProvider>
