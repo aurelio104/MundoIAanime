@@ -1,8 +1,9 @@
 // ✅ FILE: src/routes/tasa.route.ts
 import { Router } from 'express'
+import type { Request, Response } from 'express'
 import axios from 'axios'
 
-const router = Router()
+const router: Router = Router()
 
 type CacheTasa = {
   tasa: number
@@ -13,20 +14,19 @@ type CacheTasa = {
 let cache: CacheTasa | null = null
 const TTL_MS = 5 * 60 * 1000 // 5 min
 
-router.get('/tasa-bcv', async (_req, res) => {
+router.get('/tasa-bcv', async (_req: Request, res: Response) => {
   try {
     // Sirve cache fresca
     if (cache && Date.now() - cache.ts < TTL_MS) {
-      return res.set('Cache-Control', 'public, max-age=60').json(cache)
+      res.set('Cache-Control', 'public, max-age=60')
+      return res.json(cache)
     }
 
-    // 1) Intenta endpoint directo "oficial"
-    // Docs: https://ve.dolarapi.com/v1/dolares/oficial
-    // (schema incluye "promedio", "fechaActualizacion", "fuente")
+    // 1) Oficial directo
     const r1 = await axios.get('https://ve.dolarapi.com/v1/dolares/oficial', { timeout: 9000 })
     let data: any = r1.data
 
-    // 2) Fallback: lista completa si el host cambia algo
+    // 2) Fallback lista completa
     if (!data?.promedio) {
       const r2 = await axios.get('https://ve.dolarapi.com/v1/dolares', { timeout: 9000 })
       const arr = Array.isArray(r2.data) ? r2.data : []
@@ -46,12 +46,13 @@ router.get('/tasa-bcv', async (_req, res) => {
       ts: Date.now()
     }
 
-    return res.set('Cache-Control', 'public, max-age=60').json(cache)
+    res.set('Cache-Control', 'public, max-age=60')
+    return res.json(cache)
   } catch (e) {
     console.error('❌ /tasa-bcv error:', (e as Error)?.message || e)
-    // Sirve cache vieja si hay (mejor UX)
     if (cache) {
-      return res.set('Cache-Control', 'no-store').json({ ...cache, stale: true })
+      res.set('Cache-Control', 'no-store')
+      return res.json({ ...cache, stale: true })
     }
     return res.status(502).json({ error: 'No se pudo obtener la tasa del BCV' })
   }
